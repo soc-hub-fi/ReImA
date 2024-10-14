@@ -11,7 +11,7 @@ DATE=`date +%F`
 SHELL=bash
 
 # insert your ss name here
-DUT = tb_camera_ss_wrapper
+DUT = tb_top_camera_axi
 
 # library specific OPTS etc can be appended in actual library target
 AXI_DIR	?= $(shell bender path axi)
@@ -53,29 +53,13 @@ check_env:
 	mkdir -p $(BUILD_DIR)/logs/sim
 
 # This target is used to map the compiled libraries correctly for vsim
-.PHONY: library_mapping
-library_mapping:
-	cd $(BUILD_DIR)
-	vmap common_cells_lib $(BUILD_DIR)/common_cells_lib
-
-# Compile TLP-SS
-.PHONY: compile_peripherals_ss_libs
-compile_peripherals_ss_libs:
-	$(MAKE) -C ../ips/peripheral-ss compile BUILD_DIR=$(BUILD_DIR) VLOG_SUPPRESS=$(VLOG_DEFS)
-
-.PHONY: $(BUILD_DIR)/csi_rx_tb_lib
-$(BUILD_DIR)/csi_rx_tb_lib:
-	vlib $(BUILD_DIR)/csi_rx_tb_lib
-	vmap csi_rx_tb_lib $(BUILD_DIR)/csi_rx_tb_lib
-	vlog $(VLOG_OPTS) -work csi_rx_tb_lib $(REPO_INC_DIRS) $(VLOG_SUPPRESS) $(AXI_INC_DIRS) $(AXITEST_INC_DIRS) $(LIBS) -sv $(VLOG_DEFS) -f ../src/v-tb-files.list -l $(BUILD_DIR)/logs/compile/$(START_TIME)_csi_rx_tb_vlog_compile.log
-
 
 .PHONY: compile
 compile: check_env
 	vlib $(BUILD_DIR)/csi_rx_lib
 	vmap csi_rx_lib $(BUILD_DIR)/csi_rx_lib
 	vlog +acc -sv -work csi_rx_lib \
-	$(INCLUDES)  $(VLOG_SUPPRESS) $(LIBS)  \
+	$(INCLUDES)  $(VLOG_SUPPRESS) \
 	$(shell bender script flist -t simulation -t test) \
 	-l $(BUILD_DIR)/logs/compile/$(START_TIME)_verilog_vlog.log
 #vcom -work csi_rx_lib \
@@ -89,13 +73,12 @@ compile_tieoff: check_env
 	-l $(BUILD_DIR)/logs/compile/vlog-tieoff.log
 
 .PHONY: elaborate
-elaborate: check_env library_mapping
+elaborate: check_env
 	cd $(BUILD_DIR)
 	vopt \
 	$(VOPT_OPTS) \
 	$(VOPT_SUPPRESS) \
 	$(VSIM_SUPPRESS) \
-	$(LIBS) \
 	-work $(BUILD_DIR)/csi_rx_lib \
 	$(DUT) \
 	-o $(DUT)_opt \

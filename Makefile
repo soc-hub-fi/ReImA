@@ -24,6 +24,7 @@ VLOG_DEFS =
 
 repository_init: 
 	bender update
+	bender vendor init
 
 .PHONY: check-env
 check-env:

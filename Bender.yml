@@ -12,8 +12,10 @@ export_include_dirs:
 
 sources:
   files:
-  - src/include/rgb_locate.svh
-  - src/include/mipi_csi_data_types.svh
+  - src/rtl/apb_i2c/i2c_master_defines.sv
+  - src/rtl/apb_i2c/i2c_master_bit_ctrl.sv
+  - src/rtl/apb_i2c/i2c_master_byte_ctrl.sv
+  - src/rtl/apb_i2c/apb_i2c.sv
   - src/rtl/isp/mem/dual_port_ram_model.sv
   - src/rtl/isp/mem/dual_port_ram_wrapper.sv
   - src/rtl/isp/mem/pixel_mem_array_wrapper.sv
@@ -45,7 +47,6 @@ sources:
   - src/rtl/top/camera_processor_wrapper.sv
   - src/rtl/top/mipi_camera_processor_fpga.sv
   - src/rtl/top/camera_subsystem.v
-  - src/rtl/top/camera_ss_wrapper.v
 
   - target: any(test, simulation)
     files:
@@ -62,5 +63,13 @@ sources:
       - src/tb/top/tb_axi_csirx_pkg.sv
       - src/tb/top/tb_top_camera_axi.sv
       - src/tb/top/tb_top_fpga.sv
-      - src/tb/top/tb_camera_ss_wrapper.sv
 
+vendor_package:
+  - name: apb_i2c
+    target_dir: src/rtl/apb_i2c
+    upstream: { git: "https://github.com/pulp-platform/apb_i2c.git", rev: "84855413cc2c8e70209ee7f168a0225d3c5914a1" }
+    include_from_upstream:
+      - "apb_i2c.sv"
+      - "i2c_master_bit_ctrl.sv"
+      - "i2c_master_byte_ctrl.sv"
+      - "i2c_master_defines.sv"
