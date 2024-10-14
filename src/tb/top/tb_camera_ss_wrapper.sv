@@ -5,7 +5,7 @@
 `define GRBG 2'b11
 //`define REG_SANITY_TEST 1
 `include "mipi_csi_data_types.svh"
-`include "assign.svh"
+`include "axi/assign.svh"
 `include "csi_regs.svh"
 module tb_camera_ss_wrapper #(
         // AXI paramters

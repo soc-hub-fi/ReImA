@@ -4,6 +4,8 @@
 #
 ######################################################################
 BUILD_DIR ?= $(realpath $(CURDIR))/../build/
+REIMA_DIR ?= $(realpath $(CURDIR))/../
+
 START_TIME=`date +%F_%H:%M`
 DATE=`date +%F`
 SHELL=bash
@@ -12,12 +14,13 @@ SHELL=bash
 DUT = tb_camera_ss_wrapper
 
 # library specific OPTS etc can be appended in actual library target
+AXI_DIR	?= $(shell bender path axi)
+COMMON_CELLS_DIR ?= $(shell bender path common_cells)
 
-COMMON_CELLS_INC_DIRS = +incdir+../ips/bow-common-ips/ips/pulp-common-cells/include/
-AXI_INC_DIRS = $(COMMON_CELLS_INC_DIRS) +incdir+../ips/bow-common-ips/ips/axi/include/
-REPO_INC_DIRS = +incdir+../src/include/
-AXITEST_INC_DIRS= +incdir+../ips/bow-common-ips/ips/axi/include/axi/
-
+INCLUDES 	?= \
+			+incdir+$(AXI_DIR)/include \
+			+incdir+$(COMMON_CELLS_DIR)/include \
+			+incdir+$(REIMA_DIR)/src/include
 LIBS = \
 	-L $(BUILD_DIR)/csi_rx_lib \
 	-L $(BUILD_DIR)/common_cells_lib \
@@ -55,11 +58,6 @@ library_mapping:
 	cd $(BUILD_DIR)
 	vmap common_cells_lib $(BUILD_DIR)/common_cells_lib
 
-# TEMPLATE: replace common ips path with your chip version
-.PHONY: compile_common_ips_libs
-compile_common_ips_libs:
-	$(MAKE) -C ../ips/bow-common-ips/vsim compile BUILD_DIR=$(BUILD_DIR) VLOG_SUPPRESS=$(VLOG_DEFS)
-
 # Compile TLP-SS
 .PHONY: compile_peripherals_ss_libs
 compile_peripherals_ss_libs:
@@ -73,12 +71,12 @@ $(BUILD_DIR)/csi_rx_tb_lib:
 
 
 .PHONY: compile
-compile: check_env compile_peripherals_ss_libs compile_common_ips_libs $(BUILD_DIR)/csi_rx_tb_lib
+compile: check_env
 	vlib $(BUILD_DIR)/csi_rx_lib
 	vmap csi_rx_lib $(BUILD_DIR)/csi_rx_lib
 	vlog +acc -sv -work csi_rx_lib \
-	$(REPO_INC_DIRS) $(AXI_INC_DIRS)  $(VLOG_SUPPRESS) $(LIBS)  \
-	-f ../src/v-hdl-files.list \
+	$(INCLUDES)  $(VLOG_SUPPRESS) $(LIBS)  \
+	$(shell bender script flist -t simulation -t test) \
 	-l $(BUILD_DIR)/logs/compile/$(START_TIME)_verilog_vlog.log
 #vcom -work csi_rx_lib \
 #-f ../src/vhdl-hdl-files.list \

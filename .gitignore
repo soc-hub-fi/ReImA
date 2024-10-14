@@ -1,0 +1,24 @@
+##############################
+# generic conf for gitignore
+#
+# Add more as seen fit
+#############################
+work/
+*_output/
+*.log
+.visualizer/
+modelsim.ini
+# build
+build/
+# simulation artifacts
+vsim/wlf*
+vsim/*.wlf
+vsim/.nfs*
+xgui/
+# image test output
+src/tb/img_out/output_file.yuv
+# vivado files
+vivado*
+.Xil/
+# bender
+.bender
