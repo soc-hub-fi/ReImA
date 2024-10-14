@@ -59,7 +59,7 @@ compile: check_env
 	vlib $(BUILD_DIR)/csi_rx_lib
 	vmap csi_rx_lib $(BUILD_DIR)/csi_rx_lib
 	vlog +acc -sv -work csi_rx_lib \
-	$(INCLUDES)  $(VLOG_SUPPRESS) \
+	$(INCLUDES) $(VLOG_DEFS) $(VLOG_SUPPRESS) \
 	$(shell bender script flist -t simulation -t test) \
 	-l $(BUILD_DIR)/logs/compile/$(START_TIME)_verilog_vlog.log
 #vcom -work csi_rx_lib \
@@ -91,7 +91,6 @@ dut_sanity_check:
 	$(VSIM_OPTS) \
 	$(VOPT_SUPPRESS) \
 	$(VSIM_SUPPRESS) \
-	$(LIBS) \
 	-work $(BUILD_DIR)/csi_rx_lib \
 	$(DUT)_opt \
 	-do "run 0; exit" \
@@ -105,7 +104,6 @@ run_test_gui:
 	-voptargs=+acc \
 	$(VOPT_SUPPRESS) \
 	$(VSIM_SUPPRESS) \
-	$(LIBS) \
 	-work $(BUILD_DIR)/csi_rx_lib \
 	$(DUT)_opt \
 	-do "log -r /*" \
@@ -117,11 +115,11 @@ run_test:
 	vsim \
 	-assertdebug \
 	-voptargs=+acc \
+	-wlf wave.wlf \
 	$(VSIM_OPTS) \
 	$(VOPT_SUPPRESS) \
 	$(VSIM_SUPPRESS) \
-	$(LIBS) \
 	-work $(BUILD_DIR)/csi_rx_lib \
 	$(DUT)_opt \
-	-do "run -all" \
+	-do "log -r /*; run 1ms; exit" \
 	-l $(BUILD_DIR)/logs/sim/$(START_TIME)_$(DUT)_vsim.log

@@ -460,7 +460,7 @@ module tb_top_camera_axi #(
                 monitor.print_result();
                 output_file_h = $fopen("../src/tb/img_out/output_file.yuv","rb");
                 golden_file_h = $fopen("../src/tb/img_out/golden_file.yuv","rb");
-                monitor.file_compare(output_file_h, golden_file_h);
+                monitor.file_compare();
                 $fclose(output_file_h);
                 $fclose(golden_file_h);
                 $stop();

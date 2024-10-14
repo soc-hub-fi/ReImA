@@ -18,6 +18,8 @@ vsim/*.wlf
 vsim/.nfs*
 vsim/*.vstf
 xgui/
+etch11233
+transcript
 
 # image test output
 src/tb/img_out/output_file.yuv
