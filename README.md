@@ -1,4 +1,4 @@
-# ReImA
+# ReImA (CSI-2 based Reconfigurable Image Acquisition and Processing Subsystem)
 
 ## Brief description
 <img src="doc/figures/IAP_core.drawio.png">
