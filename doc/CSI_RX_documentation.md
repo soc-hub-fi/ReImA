@@ -1,4 +1,4 @@
-# CSI_RX_documentation 
+# ReImA_documentation 
 ### Table of Contents 
 * [Sub-System Introduction](#Sub-System_Introduction)<br>
 * [Sub-System Features](#Sub-System_Features)
@@ -20,10 +20,11 @@
     
 <!-- headings -->
 ## 1. Sub-System Introduction <a name="Sub-System_Introduction"></a>
-The CSI RX subsystem implements the Mobile Industry Processor Interface (MIPI) Camera
-Serial Interface (CSI-2) RX subsystem according to MIPI CSI-2 standard v1.1.
-The subsystem is configured through AXI4 interface and can capture images from a MIPI CSI-2
-Camera sensors and output an AXI4 to be directed to a memory.
+ReImA implements the Mobile Industry Processor Interface (MIPI) Camera
+Serial Interface (CSI-2) RX subsystem, along with an image signal processing that performs
+demosaicing and RGB to YUV conversion.
+The subsystem is configured through the AXI4 interface and can capture images from a MIPI CSI-2
+Camera sensors and forward pixels to memory through a dedicated AXI master interface.
 
 ## 2. Sub-system Features <a name="Sub-System_Features"></a>
 
@@ -34,29 +35,17 @@ Camera sensors and output an AXI4 to be directed to a memory.
 ### 2. Register Space <a name="Register_Space"></a>
 |Address Offset |Register Name |Description |
 |-----|-----|-----|
-|0x00 |[Core Configuration Register](#Core_Configuration_Register)|Core configuration options|
-|0x04 |[Protocol Configuration Register](#Protocol_Configuration_Register)|Protocol configuration options|
-|0x08 |[Interleave Configuration Register](#Interleave_Configuration_Register)|Interleaving options for the core|
-|0x0C |[Frame Width Register](#Frame_Width_Register)|Frame width received from the camera|
-|0x10 |[Frame Height Register](#Frame_Height_Register)|Frame height received from the camera|
-|0x14 |[Frame Pointer Register](#Frame_Pointer_Register)|Frame pointer that points to the start location of the frame in the memory|
-|0x18 |[Core Status Register](#Core_Status_Register)|Core status register|
-|0x0C |[Global Interrupt Enable Register](#Global_Interrupt_Enable_Register)|Global interrupt enable register|
-|0x14 |[Interrupt Enable Register](#Interrupt_Enable_Register)|Interrupt enable register|
-|0x18 |[Dynamic VC Selection Register](#Dynamic_VC_Selection_Register)|Virtual channel select register|
-|0x1C |[Generic Short Packet Register](#Dynamic_VC_Selection_Register)|Short packet data|
-|0x20 |[Lane 0 Information Register](#Lane_n_Information_Registers)|Lane 0 status information|
-|0x24 |[Lane 1 Information Register](#Lane_n_Information_Registers)|Lane 1 status information|
-|0x28 |[Lane 2 Information Register](#Lane_n_Information_Registers)|Lane 2 status information|
-|0x2C |[Lane 3 Information Register](#Lane_n_Information_Registers)|Lane 3 status information|
-|0x30 |[Image Information 1 for VC0](#Image_Information_1_Registers)|Image information 1 for current processing packet with VC of 0|
-|0x34 |[Image Information 2 for VC0](#Image_Information_2_Registers)|Image information 2 for current processing packet with VC of 0|
-|0x38 |[Image Information 1 for VC1](#Image_Information_1_Registers)|Image information 1 for current processing packet with VC of 1|
-|0x3C |[Image Information 2 for VC1](#Image_Information_2_Registers)|Image information 2 for current processing packet with VC of 1|
-|0x40 |[Image Information 1 for VC2](#Image_Information_1_Registers)|Image information 1 for current processing packet with VC of 2|
-|0x44 |[Image Information 2 for VC2](#Image_Information_2_Registers)|Image information 2 for current processing packet with VC of 2|
-|0x48 |[Image Information 1 for VC3](#Image_Information_1_Registers)|Image information 1 for current processing packet with VC of 3|
-|0x4C |[Image Information 2 for VC3](#Image_Information_2_Registers)|Image information 2 for current processing packet with VC of 3|
+|0x00 |[Core Configuration Register (CCR)](#Core_Configuration_Register)|Core configuration options|
+|0x04 |[Protocol Configuration Register (PCR)](#Protocol_Configuration_Register)|Protocol configuration options|
+|0x08 |[Interleave Configuration Register (ICR)](#Interleave_Configuration_Register)|Interleaving options for the core|
+|0x0C |[Frame Width Register (FWR)](#Frame_Width_Register)|Frame width received from the camera|
+|0x10 |[Frame Height Register (FHR)](#Frame_Height_Register)|Frame height received from the camera|
+|0x14 |[Frame Pointer Register (FPR0)](#Frame_Pointer_Register)|Frame pointer that points to the start location of the frame in the memory|
+|0x18 |[Frame Pointer Register (FPR1)](#Frame_Pointer_Register)|Frame pointer that points to the start location of the frame in the memory.</br> Used when memory double buffering is enabled, making the frame pointer swap between FPR0 and FPR1.|
+|0x0C |[Core Status Register (CSR)](#Core_Status_Register)|Core status register|
+|0x14 |[Global Interrupt Enable Register (GIER)](#Global_Interrupt_Enable_Register)|Global interrupt enable register|
+|0x18 |[Interrupt Enable Register (IER)](#Interrupt_Enable_Register)|Interrupt enable register|
+|0x1C |[Dynamic VC Selection Register (DVCSR)](#Dynamic_VC_Selection_Register)|Virtual channel select register|
 
 #### Core Configuration Register (0x00) <a name="Core_Configuration_Register"></a>
 Allows you to enable and disable the MIPI CSI-2 RX Controller core and apply a soft reset during core operation.
@@ -203,62 +192,6 @@ to 0 does not inhibit an error/status condition from being captured, but inhibit
 |-----|-----|-----|-----|-----|
 |31:2|Reserved||||
 |1:0|VC Selection|0x0|R/W|Select which VC to be exported to the output interface|
-
-#### Generic Short Packet Register (0x1C) <a name="Generic_Short_Packet_Register"></a>
-The Generic Short Packet register is described in Table 2-27. Packets received with generic 
-short packet codes are stored in a 31-deep internal FIFO and are made available through 
-this register.</br>
-* Note the following:
-1. If one-bit error occurs during data-transmission, the MIPI CSI-2 controller fixes the 
-error-bit and stores generic short packet data into the FIFO.
-2. When a short packet is received with a 2-bit error, the MIPI CSI-2 controller discards the 
-data without pushing the data to the FIFO.
-3. Because the data field of the register is only 16 bits wide, the ECC information is not 
-stored.
-
-|Bits |Name |Reset Value |Access |Description |
-|-----|-----|-----|-----|-----|
-|31:24|Reserved||||
-|23:8|Data|0x0|R|16-bit short packet data|
-|7-6|Virtual Channel|0x0|R|Virtual channel number|
-|5:0|Data Type|0x0|R|Generic short packet code|
-
-#### Lane_n Information Registers (0x20, 0x24, 0x28, 0x2C) <a name="Lane_n_Information_Registers"></a>
-The Lane_n Information register, where n is 0, 1, 2 or 3,
-provides the status of the n data lane.</br> This register is reset when any write to the 
-Protocol Configuration register is detected, irrespective of whether the Protocol 
-Configuration register contents are updated or not.
-
-|Bits |Name |Reset Value |Access |Description |
-|-----|-----|-----|-----|-----|
-|31:6|Reserved||||
-|5|Stop State|0x0|R|Detection of stop state|
-|4-3|Reserved|0x0|||
-|2|skewcalhs|0x0|R|Indecates the deskew reception|
-|1|SoT error|0x0|R|Detection of SoT error|
-|0|SoT sync error|0x0|R|Detection of SoT synchronization error|
-
-#### Image Information 1 Registers (VC0 to VC3) (0x30, 0x34, 0x38, 0x3C) <a name="Image_Information_1_Registers"></a>
-The Image Information 1 registers provide image 
-information for line count and byte count per VC.</br> The byte count gets updated whenever a 
-long packet (from Data Types 0x18 and above) for the corresponding virtual channel is 
-processed by the control FSM.</br> The line count is updated whenever the packet is written into 
-the line buffer.
-
-|Bits |Name |Reset Value |Access |Description |
-|-----|-----|-----|-----|-----|
-|31:16|Line count|0x0|R|Number of long packets written to line buffer|
-|15:0|Byte count|0x0|R|Byte count of current packet being processed by the control FSM|
-
-#### Image Information 2 Registers (VC0 to VC3) (0x40, 0x44, 0x48, 0x4C) <a name="Image_Information_2_Registers"></a>
-The Image Information 2 registers provide the image 
-information Data Type.</br> The Data Type is updated whenever a long packet (Data Types 0x18 
-and above) for the corresponding virtual channel is processed by the control FSM.
-
-|Bits |Name |Reset Value |Access |Description |
-|-----|-----|-----|-----|-----|
-|31:6|Reserved||||
-|15:0|Data Type|0x0|R|Data Type of current packet being processed by control FSM|
 
 ## 4. Designing With The Subsystem <a name="Designing_With_The_Subsystem"></a>
 
