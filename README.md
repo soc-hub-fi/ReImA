@@ -1,7 +1,7 @@
 # ReImA
 
 ## Brief description
-<img src="doc/figures/IAP_core.drawio.pdf">
+<img src="doc/figures/IAP_core.drawio.png">
 The repo features the following:</br>
 
 * A reconfigurable image acquisistion and processing core which supports MIPI CSI-2 protocol.</br>
