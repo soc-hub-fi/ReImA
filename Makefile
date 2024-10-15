@@ -18,13 +18,16 @@ BUILD_DIR ?= $(realpath $(CURDIR))/build/
 START_TIME=`date +%F_%H:%M`
 SHELL=bash
 VLOG_DEFS =
+
 ######################################################################
 # Repository targets
 ######################################################################
 
-repository_init: 
-	bender update
-	bender vendor init
+repository_init:
+	@echo "Pulling Bender dependencies"
+	@bender update
+	@echo "Pulling vendor IPs"
+	@bender vendor init
 
 .PHONY: check-env
 check-env:
@@ -56,9 +59,9 @@ sanity_check: check-env
 run_test: check-env
 	$(MAKE) -C vsim run_test
 
-.PHONY: run_test_gui
-run_test_gui: check-env
-	$(MAKE) -C vsim run_test_gui
+.PHONY: wave
+wave: check-env
+	$(MAKE) -C vsim wave
 
 ######################################################################
 # clean target 

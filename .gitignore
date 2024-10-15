@@ -3,32 +3,23 @@
 #
 # Add more as seen fit
 #############################
-work/
-*_output/
-*.log
-.visualizer/
-modelsim.ini
 
 # build
 build/
 
 # simulation artifacts
-vsim/wlf*
-vsim/*.wlf
-vsim/.nfs*
-vsim/*.vstf
-xgui/
-etch11233
-transcript
+vsim/*
+!vsim/Makefile
+!vsim/README.md
 
 # image test output
-src/tb/img_out/output_file.yuv
+src/tb/img_out/*
 
-# vivado files
+# Vivado files
 vivado*
 .Xil/
 
-# bender
+# Bender
 .bender
 
 # apb_i2c

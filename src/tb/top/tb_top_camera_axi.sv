@@ -313,24 +313,8 @@ module tb_top_camera_axi #(
                             .frame_wr_done_intr_o   (frame_wr_done_intr_o)
                     );
 
-    //assign mipi_camera_processor_i.frame_ptr = PTR0_ADDR;
-    //assign mipi_camera_processor_i.frame_width = IMG_WIDTH;
-    //assign mipi_camera_processor_i.frame_hight = IMG_LENGTH;
-    ////assign mipi_camera_processor_i.frame_ptr1 = PTR1_ADDR;
-    ////assign mipi_camera_processor_i.frame_ptr2 = PTR2_ADDR;
-    //assign mipi_camera_processor_i.output_select = 1'b1;
-    //assign mipi_camera_processor_i.rx_byte_clk_hs = csi_dphy_rx.rx_byte_clk_hs_o;
-    //assign mipi_camera_processor_i.vc_id_reg = vc_id_reg_i;
-    //assign mipi_camera_processor_i.data_type_reg = data_type_reg_i;
-    //assign mipi_camera_processor_i.active_lanes_reg = 3'd4;
-    //assign mipi_camera_processor_i.clear_frame_data = '{1'b0,1'b0,1'b0,1'b0};
-    //assign mipi_camera_processor_i.clear_frame_sync = '{1'b0,1'b0,1'b0,1'b0};
     assign mipi_camera_processor_i.err_sot_hs =1'b0;
     assign mipi_camera_processor_i.err_sot_sync_hs =1'b0;
-    //assign mipi_camera_processor_i.rx_valid_hs = csi_dphy_rx.rx_valid_hs_o;
-    //assign mipi_camera_processor_i.rx_data_hs = csi_dphy_rx.rx_data_hs_o;
-    //assign mipi_camera_processor_i.pixel_per_clk_reg ='{3'd2,3'd2,3'd2,3'd2};
-    //assign mipi_camera_processor_i.bayer_filter_type_reg = bayer_filer_type;
     assign yuv422_data = mipi_camera_processor_i.yuv422_data;
     assign yuv422_byte_valid = mipi_camera_processor_i.yuv422_byte_valid;
 
@@ -458,8 +442,8 @@ module tb_top_camera_axi #(
             if(eos) begin
                 monitor.empty_queues();
                 monitor.print_result();
-                output_file_h = $fopen("../src/tb/img_out/output_file.yuv","rb");
-                golden_file_h = $fopen("../src/tb/img_out/golden_file.yuv","rb");
+                //output_file_h = $fopen("../src/tb/img_out/output_file.yuv","rb");
+                //golden_file_h = $fopen("../src/tb/img_out/golden_file.yuv","rb");
                 monitor.file_compare();
                 $fclose(output_file_h);
                 $fclose(golden_file_h);
