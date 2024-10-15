@@ -1,17 +1,11 @@
-# MIPI Camera Serial Interface Receiver
-## Pipeline status
-
-Pipeline status: [![pipeline status](https://gitlab.tuni.fi/soc-hub/bow/hw/csi-rx/badges/main/pipeline.svg)](https://gitlab.tuni.fi/soc-hub/ss-template/-/commits/main) 
-
-Coverage: [![pipeline status](https://gitlab.tuni.fi/soc-hub/bow/hw/csi-rx/badges/main/pipeline.svg)](https://gitlab.tuni.fi/ss-template/-/commits/main) 
-
-Latest release:  [![Latest Release](https://gitlab.tuni.fi/soc-hub/bow/hw/csi-rx/-/badges/release.svg)](https://gitlab.tuni.fi/soc-hub/ss-template/-/releases) 
+# ReImA
 
 ## Brief description
-<img src="doc/figures/csi.drawio.png">
+<img src="doc/figures/IAP_core.drawio.pdf">
 The repo features the following:</br>
 
-* Camera serial interface which supports the following configurations</br>
+* A reconfigurable image acquisistion and processing core which supports MIPI CSI-2 protocol.</br>
+    The core supports the following configurations</br>
     - 1, 2, or 4 lane configuration
     - 1, 2, or 4 pixel per clock output
     - Supports YUV422_8, RGB888, RGB565, RAW8, RAW10 datatypes

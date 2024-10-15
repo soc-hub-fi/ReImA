@@ -24,7 +24,6 @@ INCLUDES 	?= \
 # Questa compilations, elaboration and simulation flags
 VOPT_OPTS += "-check_synthesis" \
 				"-pedanticerrors" \
-				"+acc=npr" \
 				"-libverbose=prlib"
 VSIM_OPTS = "-c"
 VLOG_SUPPRESS = 
@@ -49,7 +48,7 @@ library_mapping: check_env
 .PHONY: compile
 compile: library_mapping
 	cd $(BUILD_DIR)
-	vlog +acc -sv -work reima_lib \
+	vlog -sv -work reima_lib \
 	+define+VERILATOR \
 	$(INCLUDES) $(VLOG_DEFS) $(VLOG_SUPPRESS) \
 	$(shell bender script flist -t simulation -t test) \

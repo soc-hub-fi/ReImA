@@ -427,6 +427,7 @@ import axi_pkg::modifiable;
         integer golden_file_h;
         integer status1, status2;
         integer line_num;
+        integer errors=0;
         logic ok=1;
         reg [3840*8-1:0] line1, line2;  // Registers to store each line of the file
 
@@ -436,39 +437,42 @@ import axi_pkg::modifiable;
         $display("Comparing files.....");
 
         if (output_file_h == 0 || golden_file_h == 0) begin
-        $display("Error: One or both files could not be opened.");
-        $finish;
+            $display("Error: One or both files could not be opened.");
+            $finish;
         end
 
         line_num = 1;
         status1 = $fgets(line1, output_file_h);
         status2 = $fgets(line2, golden_file_h);
-        $display("status is %h", status2);
 
         while (! $feof(golden_file_h)) begin
-            $display(status1);
-        // Compare lines
-        if (line1 != line2) begin
-            $display("Difference found at line %d:", line_num);
-            //$display("output_file_h: %h", line1);
-            //$display("golden_file_h: %h", line2);
-            ok=0;
-        end
+            // Compare lines
+            if (line1 != line2) begin
+                $display("Difference found at line %d:", line_num);
+                errors++;
+            end
 
-        // Read next lines
-        status1 = $fgets(line1, output_file_h);
-        status2 = $fgets(line2, golden_file_h);
-        line_num = line_num + 1;
+            // Read next lines
+            status1 = $fgets(line1, output_file_h);
+            status2 = $fgets(line2, golden_file_h);
+            line_num = line_num + 1;
         end
-
-        if (ok) $display("[ok]");
+        
+        if (errors==0) $display("[ok]");
         else $display("[not ok]");
 
         // Close the files
         $fclose(output_file_h);
         $fclose(golden_file_h);
 
-        $display("File comparison completed.");
+        $display("File comparison completed.\n");
+        $display("Number of errors found is %d \n", errors);
+
+        if(errors<10)
+            $display("Image should be correct");
+        else
+            $display("Image might be corrupted inspect the yuv output file");
+
         $finish;
     endtask
 
