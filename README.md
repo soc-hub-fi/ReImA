@@ -9,9 +9,19 @@ The repo features the following:</br>
     - 1, 2, or 4 lane configuration
     - 1, 2, or 4 pixel per clock output
     - Supports YUV422_8, RGB888, RGB565, RAW8, RAW10 datatypes
+    - Supports demosaicing for RGGB, BGGR, GRBG, or GBRG Bayer patterns
 * Programmability through AXI slave interface
 * Simple AXI master with programmable destination address for the pixel stream
 
+## Repo Structure
+
+- **build**: A temporary directory created during the HW build flow. Contains logs and temporary artefacts.
+- **.bender**: A temporary directory used by Bender to provide a local checkout for necessary IPs
+- **doc**: Documents/Figures.
+- **fpga**: FPGA prototyping script + artefacts
+- **src**: RTL and TB sources specific to this repository
+- **vsim**: Artefacts related to Questa simulation flow
+  
 ## Hardware Simulation
 The following RTL simulation tools are supported with the versions specified:
 - Questasim 10.7g
@@ -38,12 +48,6 @@ Use the following commands to run the simulation in CLI
 ```
 make run_test VLOG_DEFS=+define+PIC_TEST # runs simulation for an input picture
 make run_test VLOG_DEFS=+define+REG_SANITY_TEST # runs simulation for register accesses
-```
-
-Use the following commands to run the simulation in GUI
-```
-make run_test_gui VLOG_DEFS=+define+PIC_TEST # runs simulation for an input picture
-make run_test_gui VLOG_DEFS=+define+REG_SANITY_TEST # runs simulation for register accesses
 ```
 
 ## FPGA Emulation
