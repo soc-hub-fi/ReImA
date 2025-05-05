@@ -1,5 +1,5 @@
 package:
-  name: reima 
+  name: iap_core 
   authors:
   - "Mohamed Soliman <mohamed.w.soliman@tuni.fi>"
   - "Antti Nurmi <antti.nurmi@tuni.fi>"
@@ -12,64 +12,26 @@ export_include_dirs:
 
 sources:
   files:
-  - src/rtl/apb_i2c/i2c_master_defines.sv
-  - src/rtl/apb_i2c/i2c_master_bit_ctrl.sv
-  - src/rtl/apb_i2c/i2c_master_byte_ctrl.sv
-  - src/rtl/apb_i2c/apb_i2c.sv
-  - src/rtl/isp/mem/dual_port_ram_model.sv
-  - src/rtl/isp/mem/dual_port_ram_wrapper.sv
-  - src/rtl/isp/mem/pixel_mem_array_wrapper.sv
-  - src/rtl/isp/mem/yuv_mem_array_wrapper.sv
-  - src/rtl/dphy/rx_deserializer.sv
-  - src/rtl/dphy/rx_io_dphy_data.sv
-  - src/rtl/dphy/rx_io_dphy_clock.sv
-  - src/rtl/dphy/d_phy_top.sv
-  - src/rtl/csi/crc/crc16_parallel.sv
-  - src/rtl/csi/crc/crc16_top.sv
-  - src/rtl/csi/mipi_csi_rx_byte_aligner_m.sv
-  - src/rtl/csi/mipi_csi_rx_depacker.sv
-  - src/rtl/csi/mipi_csi_rx_header_ecc.sv
-  - src/rtl/csi/mipi_csi_rx_lane_aligner_m.sv
-  - src/rtl/csi/mipi_csi_rx_packet_decoder.sv
-  - src/rtl/csi/mipi_csi_rx_packet_stream_controller.sv
-  - src/rtl/csi/mipi_csi_rx_protocol_layer.sv
-  - src/rtl/isp/flow_control.sv
-  - src/rtl/isp/debayer_filter.sv
-  - src/rtl/isp/rgb_to_yuv.sv
-  - src/rtl/isp/csi_axi_master.sv
-  - src/rtl/fpga/top_csi_fpga_wrapper_sv.sv
-  - src/rtl/fpga/top_csi_fpga_wrapper_v.v
-  - src/rtl/top/camera_io_pads.v
-  - src/rtl/top/camera_pad_ctrl.sv
-  - src/rtl/top/isp_pipeline.sv
-  - src/rtl/top/csi_integration.sv
-  - src/rtl/top/mipi_camera_processor.sv
-  - src/rtl/top/camera_processor_wrapper.sv
-  - src/rtl/top/mipi_camera_processor_fpga.sv
-  - src/rtl/top/camera_subsystem.v
+  - src/ip/mem_dual_port_model.sv
+  - src/ip/mem_dual_port_wrapper.sv
+  - src/ip/mem_yuv_array_wrapper.sv
+  - src/ip/cu_crc16_parallel.sv
+  - src/ip/cu_crc16_top.sv
+  - src/ip/cu_depacker.sv
+  - src/ip/cu_ecc.sv
+  - src/ip/cu_packet_decoder.sv
+  - src/ip/cu_stream_controller.sv
+  - src/ip/ipu_flow_control.sv
+  - src/ip/ipu_bilinear_interpolation.sv
+  - src/ip/ipu_debayer_filter.sv
+  - src/ip/ipu_color_conversion.sv
+  - src/ip/axi_master.sv
+  - src/ip/control_unit.sv
+  - src/ip/image_processing_unit.sv
+  - src/ip/iap_core.sv
 
   - target: any(test, simulation)
     files:
-      - src/tb/csi/tb_crc16.sv
-      - src/tb/csi/tb_mipi_csi_rx_packet_stream_controller.sv
-      - src/tb/csi/tb_mipi_csi_rx_depacker.sv
-      - src/tb/csi/if_csi_dphy_rx_model.sv
-      - src/tb/csi/if_csi_dphy_rx_model_old.sv
-      - src/tb/csi/pattern_generator.v
-      - src/tb/isp/tb_isp_pipeline.sv
-      - src/tb/isp/tb_flow_control.sv
-      - src/tb/top/tb_top.sv
-      - src/tb/top/tb_top_camera.sv
-      - src/tb/top/tb_axi_csirx_pkg.sv
-      - src/tb/top/tb_top_camera_axi.sv
-      - src/tb/top/tb_top_fpga.sv
-
-vendor_package:
-  - name: apb_i2c
-    target_dir: src/rtl/apb_i2c
-    upstream: { git: "https://github.com/pulp-platform/apb_i2c.git", rev: "84855413cc2c8e70209ee7f168a0225d3c5914a1" }
-    include_from_upstream:
-      - "apb_i2c.sv"
-      - "i2c_master_bit_ctrl.sv"
-      - "i2c_master_byte_ctrl.sv"
-      - "i2c_master_defines.sv"
+      - src/tb/dphy_rx_model.sv
+      - src/tb/tb_iap_core_pkg.sv
+      - src/tb/tb_iap_core.sv
