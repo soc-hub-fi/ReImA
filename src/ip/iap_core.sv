@@ -122,7 +122,7 @@ module iap_core #(
 
   // Additional signals
   input logic                             rx_byte_clk_hs,
-  input logic     [4:0]                   rx_valid_hs,
+  input logic                             rx_valid_hs [4],
   input logic     [7:0]                   rx_data_hs [4],
   output logic                            frame_wr_done_intr_o
 );

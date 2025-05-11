@@ -9,39 +9,39 @@
 `include "mipi_csi_data_types.svh"
 
 module control_unit (
-    // Clock and reset interface
-    input  logic        reset_n_i,               // Active low reset
-    input  logic        rx_byte_clk_hs_i,        // Byte clock from D-PHY (non-continuous)
+  // Clock and reset interface
+  input  logic        reset_n_i,              // Active low reset
+  input  logic        rx_byte_clk_hs_i,       // Byte clock from D-PHY (non-continuous)
 
-    // Configuration registers interface
-    input  logic [1:0]  vc_id_reg_i       [4],   // Virtual channel to process for each ISP pipeline
-    input  logic [5:0]  data_type_reg_i   [4],   // Datatype to process for each ISP pipeline
-    input  logic [2:0]  active_lanes_reg_i,      // Active lanes (1, 2, or 4)
-    input  logic [3:0]  clear_frame_data_i,      // Clear `err_frame_data` register
-    input  logic [3:0]  clear_frame_sync_i,      // Clear `err_frame_sync` register
+  // Configuration registers interface
+  input  logic [1:0]  vc_id_reg_i [4],        // Virtual channel to process for each ISP pipeline
+  input  logic [5:0]  data_type_reg_i [4],    // Datatype to process for each ISP pipeline
+  input  logic [2:0]  active_lanes_reg_i,     // Active lanes (1, 2, or 4)
+  input  logic [3:0]  clear_frame_data_i,     // Clear `err_frame_data` register
+  input  logic [3:0]  clear_frame_sync_i,     // Clear `err_frame_sync` register
 
-    // Error signals interface
-    input  logic        err_sot_sync_hs_i,       // SOT sequence corrupted, synchronization not possible
-    output logic        err_crc_o,               // CRC error in received packet data
-    output logic [3:0]  err_frame_sync_o,        // FS not paired with FE
-    output logic [3:0]  err_frame_data_o,        // Frame has corrupted data
+  // Error signals interface
+  input  logic        err_sot_sync_hs_i,       // SOT sequence corrupted, synchronization not possible
+  output logic        err_crc_o,               // CRC error in received packet data
+  output logic [3:0]  err_frame_sync_o,        // FS not paired with FE
+  output logic [3:0]  err_frame_data_o,        // Frame has corrupted data
 
-    // Stream information interface
-    output logic [3:0]  activate_stream_o,       // Activate stream for short packet or payload data
-    output logic        header_no_error_o,       // No 1- or 2-bit errors
-    output logic        header_corrected_error_o,// Corrected 1-bit error
-    output logic        header_error_o,          // 2-bit error detected
-    output logic [3:0]  line_valid_o,            // Line reception active signal
-    output logic [15:0] line_num_o        [4],   // Line number (increments per frame)
-    output logic [3:0]  frame_valid_o,           // Frame reception active signal
-    output logic [15:0] frame_num_o       [4],   // Frame number (increments per FS packet)
+  // Stream information interface
+  output logic [3:0]  activate_stream_o,        // Activate stream for short packet or payload data
+  output logic        header_no_error_o,        // No 1- or 2-bit errors
+  output logic        header_corrected_error_o, // Corrected 1-bit error
+  output logic        header_error_o,           // 2-bit error detected
+  output logic [3:0]  line_valid_o,             // Line reception active signal
+  output logic [15:0] line_num_o [4],           // Line number (increments per frame)
+  output logic [3:0]  frame_valid_o,            // Frame reception active signal
+  output logic [15:0] frame_num_o [4],          // Frame number (increments per FS packet)
 
-    // Data interface
-    input  logic [3:0]  rx_valid_hs_i,           // Valid signal for high-speed data from D-PHY
-    input  logic [7:0]  rx_data_hs_i     [4],    // High-speed data from D-PHY
-    output logic        line_valid_sync_fake_o,  // Fake line valid signal
-    output logic [3:0]  byte_data_valid_o,       // Pixel data valid signal for each byte
-    output logic [47:0] byte_data_o              // Pixel data (max 5 bytes for RAW10)
+  // Data interface
+  input  logic        rx_valid_hs_i [4],        // Valid signal for high-speed data from D-PHY
+  input  logic [7:0]  rx_data_hs_i [4],         // High-speed data from D-PHY
+  output logic        line_valid_sync_fake_o,   // Fake line valid signal
+  output logic [3:0]  byte_data_valid_o,        // Pixel data valid signal for each byte
+  output logic [47:0] byte_data_o               // Pixel data (max 5 bytes for RAW10)
 );
 
   // Parameters
