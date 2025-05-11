@@ -16,6 +16,13 @@
 `include "mipi_csi_data_types.svh"
 `include "rgb_locate.svh"
 
+`define SHIFT_PIPELINE_3STAGE(DATA, QPIPE, DPIPE) \
+  begin \
+    DPIPE.pixel_data_q  = DATA; \
+    DPIPE.pixel_data_q2 = QPIPE.pixel_data_q; \
+    DPIPE.pixel_data_q3 = QPIPE.pixel_data_q2; \
+  end
+
 module ipu_bilinear_interpolation #(
   parameter DataWidth = 40,
   parameter ValidWidth = 4
@@ -91,28 +98,12 @@ module ipu_bilinear_interpolation #(
     logic [PixelWidth-1:0]  b;
   } rgb_color_t;
 
-  typedef struct packed {
+  typedef struct {
     rgb_color_t rgb0[4];
     rgb_color_t rgb1[4];
     rgb_color_t rgb2[4];
     rgb_color_t rgb3[4];
   } rgb_4by4_t;
-
-  function automatic reg_pipe_t shift_pipeline_3stage #(
-    type reg_pipe_t = reg_pipe_4ppc_raw10_t, // struct type
-    type logic_t = logic [39:0] // data input type
-  ) (
-    logic_t pixel_data_d,
-    reg_pipe_t reg_pipe_q
-  );
-    reg_pipe_t reg_pipe_d;
-
-    reg_pipe_d.pixel_data_q  = pixel_data_d;
-    reg_pipe_d.pixel_data_q2 = reg_pipe_q.pixel_data_q;
-    reg_pipe_d.pixel_data_q3 = reg_pipe_q.pixel_data_q2;
-
-    return reg_pipe_d;
-  endfunction
 
   // RAM output and valid signals
   reg_pipe_valids_t reg_pipe_valids[2:0];
@@ -132,7 +123,7 @@ module ipu_bilinear_interpolation #(
 
   // RAW8 RAM output signals
   reg_pipe_4ppc_raw8_t reg_pipe_4ppc_raw8_d[2:0],
-      reg_pipe_4ppc_raw8_q[2:0];
+      reg_pipe_4ppc_raw8_q[2:0],
       reg_pipe_4ppc_raw8_q2[2:0];
 
   reg_pipe_2ppc_raw8_t reg_pipe_2ppc_raw8_d[2:0],
@@ -153,32 +144,36 @@ module ipu_bilinear_interpolation #(
 
   // Miscellaneous signals
   logic [1:0] not_used2b;
-  int         input_width;
-  int         pixel_width;
-  logic       odd_signal;
+  int input_width;
+  int pixel_width;
+  logic odd_signal;
   logic [3:0] pixel_data_valid_q;
   logic [3:0] pixel_data_valid_q2;
-  logic       line_done_pulse_q;
-  logic       line_done_pulse_q2;
-  logic       line_done_pulse_q3;
-  logic       line_done_pulse_q4;
-  logic       line_done_pulse_q5;
+  logic line_done_pulse_q;
+  logic line_done_pulse_q2;
+  logic line_done_pulse_q3;
+  logic line_done_pulse_q4;
+  logic line_done_pulse_q5;
+  logic [ValidWidth-1:0] reg_pipe_valids_q;
+  logic [ValidWidth-1:0] reg_pipe_valids_q2;
+  logic [ValidWidth-1:0] reg_pipe_valids_q3;
+  logic [ValidWidth-1:0] reg_pipe_valids_q4;
+  logic [ValidWidth-1:0] reg_pipe_valids_q5;
 
   // Pipeline registers for RAM outputs and valid signals
   always_comb begin
     for (int j=0; j<3; j++) begin
-      reg_pipe_4ppc_raw10_d[j]  = shift_pipeline_3stage #( .reg_pipe_t(reg_pipe_4ppc_raw10_t), .logic_t(logic [39:0]) ) ( pixel_line_i[j][39:0], reg_pipe_4ppc_raw10_q[j] );
-      reg_pipe_2ppc_raw10_d[j]  = shift_pipeline_3stage #( .reg_pipe_t(reg_pipe_2ppc_raw10_t), .logic_t(logic [19:0]) ) ( pixel_line_i[j][19:0], reg_pipe_2ppc_raw10_q[j] );
-      reg_pipe_1ppc_raw10_d[j]  = shift_pipeline_3stage #( .reg_pipe_t(reg_pipe_1ppc_raw10_t), .logic_t(logic [9:0]) ) ( pixel_line_i[j][9:0], reg_pipe_1ppc_raw10_q[j] );
-      
-      reg_pipe_4ppc_raw8_d[j]   = shift_pipeline_3stage #( .reg_pipe_t(reg_pipe_4ppc_raw8_t), .logic_t(logic [31:0]) ) ( pixel_line_i[j][31:0], reg_pipe_4ppc_raw8_q[j] );
-      reg_pipe_2ppc_raw8_d[j]   = shift_pipeline_3stage #( .reg_pipe_t(reg_pipe_2ppc_raw8_t), .logic_t(logic [15:0]) ) ( pixel_line_i[j][15:0], reg_pipe_2ppc_raw8_q[j] );
-      reg_pipe_1ppc_raw8_d[j]   = shift_pipeline_3stage #( .reg_pipe_t(reg_pipe_1ppc_raw8_t), .logic_t(logic [7:0]) ) ( pixel_line_i[j][7:0],  reg_pipe_1ppc_raw8_q[j] );
+      `SHIFT_PIPELINE_3STAGE(pixel_line_i[j][39:0], reg_pipe_4ppc_raw10_q[j], reg_pipe_4ppc_raw10_d[j]);
+      `SHIFT_PIPELINE_3STAGE(pixel_line_i[j][19:0], reg_pipe_2ppc_raw10_q[j], reg_pipe_2ppc_raw10_d[j]);
+      `SHIFT_PIPELINE_3STAGE(pixel_line_i[j][9:0],  reg_pipe_1ppc_raw10_q[j], reg_pipe_1ppc_raw10_d[j]);
+
+      `SHIFT_PIPELINE_3STAGE(pixel_line_i[j][31:0], reg_pipe_4ppc_raw8_q[j], reg_pipe_4ppc_raw8_d[j]);
+      `SHIFT_PIPELINE_3STAGE(pixel_line_i[j][15:0], reg_pipe_2ppc_raw8_q[j], reg_pipe_2ppc_raw8_d[j]);
+      `SHIFT_PIPELINE_3STAGE(pixel_line_i[j][7:0],  reg_pipe_1ppc_raw8_q[j], reg_pipe_1ppc_raw8_d[j]);
     end
   end
 
   // Pipeline registers for RAM outputs and valid signals, following lowRISC style
-  assign reg_pipe_valids_d = pixel_line_i[j][DataWidth +: ValidWidth];
   always_ff @(posedge clk_i or negedge reset_n_i) begin
     if (!reset_n_i) begin
       line_done_pulse_q   <= 1'b0;
@@ -205,7 +200,7 @@ module ipu_bilinear_interpolation #(
       line_done_pulse_q2  <= line_done_pulse_q;
 
       for (int j = 0; j < 3; j++) begin
-        reg_pipe_valids_q[j]        <= reg_pipe_valids_d;
+        reg_pipe_valids_q[j]        <= pixel_line_i[j][DataWidth +: ValidWidth];
         reg_pipe_valids_q2[j]       <= reg_pipe_valids_q[j];
         reg_pipe_4ppc_raw10_q[j]    <= reg_pipe_4ppc_raw10_d[j];
         reg_pipe_4ppc_raw10_q2[j]   <= reg_pipe_4ppc_raw10_q[j];

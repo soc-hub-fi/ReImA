@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------------
-// Module: ipu_debayer_filter.sv
+// Module: ipu_debayer_filter
 // Project: Reconfigurable Image Acquisition and Processing Subsystem for MPSoCs (ReImA)
 // References: Gaurav Singh www.CircuitValley.com
 // Functionality:
@@ -42,16 +42,16 @@ module ipu_debayer_filter (
       pixel_data_trun_q, 
       pixel_data_trun_q2;
   logic line_counter; //only 1 bit so does not actually counts lines of the frame , needed determine if line is odd or even
-  logic line_valid_reg;
+  logic line_valid_q;
   logic [1:0] read_ram_index; 	//which line RAM is being focused to read for even lines,  (not which address is being read from line RAM) Must be 2 bits only
   logic [1:0] read_ram_index_plus_1;
   logic [1:0] read_ram_index_minus_1;
   logic [1:0] write_ram_select;	//which line RAM is begin written
   logic [AddrWidth-1:0] line_address_wr_q, 
-      line_address_rd,
+      line_address_rd_q,
       line_address_wr_q2; 		//which address is being read and written 
-  logic [1:0] [(DataWidth+ValidWidth-1):0] ram_out;
-  logic [2:0] [(DataWidth+ValidWidth-1):0] ram_out_mapped;
+  logic [1:0] [(DataWidth+ValidWidth-1):0] reg_out;
+  logic [2:0] [(DataWidth+ValidWidth-1):0] reg_out_mapped;
   logic [1:0] ram_write_enable;
   logic line_valid_negedge;
   logic frame_done_pulse_pending;
@@ -79,7 +79,7 @@ module ipu_debayer_filter (
     end else begin
       if (pixel_data_valid_i) begin
         line_active <= 1'b1;
-      end else if (pixel_data_trun_q) begin
+      end else if (line_done_pulse_q) begin
         line_active <= 1'b0;
       end
     end
@@ -118,11 +118,11 @@ module ipu_debayer_filter (
     .ram_read_enable_i      (2'b11),
     .ram_write_address_i    (line_address_wr_q),
     .ram_data_i             (pixel_data_trun_q2),
-    .ram_read_address_i     (line_address_rd),
-    .ram_data_o             (ram_out)
+    .ram_read_address_i     (line_address_rd_q),
+    .ram_data_o             (reg_out)
   );
 
-  assign line_valid_negedge = !line_valid_i & line_valid_reg;
+  assign line_valid_negedge = !line_valid_i & line_valid_q;
 
   // FSM for output valid control
   always_ff @(posedge clk_i or negedge reset_n_i) begin
@@ -133,7 +133,7 @@ module ipu_debayer_filter (
     end else begin
       case (line_state_q)
         Idle: begin
-          if (pixel_data_trun_q2) begin
+          if (line_done_pulse_q2) begin
             line_state_q <= OneLineFilled;
           end
         end
@@ -147,9 +147,6 @@ module ipu_debayer_filter (
             line_state_q <= Idle;
           end
         end
-        default: begin
-          line_state_q <= Idle;
-        end
       endcase
       line_state_q2 <= line_state_q;
       line_state_q3 <= line_state_q2;
@@ -157,24 +154,29 @@ module ipu_debayer_filter (
   end
 
   assign last_line_read_done = (line_state_q == OneLineExtract) && 
-                  (line_address_rd >= line_address_wr_q2);
+                  (line_address_rd_q >= line_address_wr_q2);
 
   always_ff @(posedge clk_i or negedge reset_n_i) begin
     if (!reset_n_i) begin
-      line_address_rd       <= '0;
-      line_valid_reg        <= 1'b0;
+      line_address_rd_q       <= '0;
+      line_valid_q        <= 1'b0;
       pixel_data_trun_q     <= '0;
       pixel_data_trun_q2    <= '0;
+      line_done_pulse_q <= 1'b0;
+      line_done_pulse_q2 <= 1'b0;
     end else begin
-      line_valid_reg        <= line_valid_i;
+      line_valid_q        <= line_valid_i;
       pixel_data_trun_q     <= pixel_data_trun_d;
       pixel_data_trun_q2    <= pixel_data_trun_q;
 
+      line_done_pulse_q <= line_done_pulse_i;
+      line_done_pulse_q2 <= line_done_pulse_q;
+
       // Line address read logic
       if (line_done_pulse_i || frame_done_pulse_o) begin
-        line_address_rd   <= '0;
+        line_address_rd_q   <= '0;
       end else if (pixel_data_valid_i || (line_state_q == OneLineExtract)) begin
-        line_address_rd   <= line_address_rd + 1'b1;
+        line_address_rd_q   <= line_address_rd_q + 1'b1;
       end
     end
   end
@@ -198,7 +200,7 @@ module ipu_debayer_filter (
       line_address_wr_q <= 1;
       line_address_wr_q2 <= 0;
     end else begin
-      if ((!line_valid_i && line_valid_reg) || pixel_data_trun_q2) begin
+      if ((!line_valid_i && line_valid_q) || line_done_pulse_q2) begin
         line_address_wr_q <= 1;
         line_address_wr_q2 <= line_address_wr_q;
       end else if (pixel_data_trun_q2[DataWidth +: ValidWidth]) begin
@@ -237,16 +239,16 @@ module ipu_debayer_filter (
   // p1 [8] = {2,2,1,1,0,0,2,2,1};
   // p2 [8] = {1,1,2,0,1,2,0,1,2};
   always_comb begin
-    ram_out_mapped[p0[idx]] = ram_out[0];
-    ram_out_mapped[p1[idx]] = ram_out[1];
-    ram_out_mapped[p2[idx]] = pixel_data_trun_q2;
+    reg_out_mapped[p0[idx]] = reg_out[0];
+    reg_out_mapped[p1[idx]] = reg_out[1];
+    reg_out_mapped[p2[idx]] = pixel_data_trun_q2;
   end
 
   always_ff @(posedge clk_i or negedge reset_n_i) begin
     if (!reset_n_i) begin
       idx <= 3'd0;
     end else begin
-      if (pixel_data_trun_q2) begin
+      if (line_done_pulse_q2) begin
         idx <= idx + 1'b1;
         if (idx == 3'd7) begin
           idx <= 3'd2;
@@ -267,13 +269,13 @@ module ipu_debayer_filter (
     .data_type_i(data_type_i),
     .pixel_per_clk_i(pixel_per_clk_i),
     .bayer_filter_type_i(bayer_filter_type_i),
-    .pixel_line_i(ram_out_mapped),
-    .line_done_pulse_i(pixel_data_trun_q2),
+    .pixel_line_i(reg_out_mapped),
+    .line_done_pulse_i(line_done_pulse_q2),
     .line_counter_i(line_counter),
     .pipe_stall_i(pipe_stall),
-    .read_ram_index_i(read_ram_index),
-    .read_ram_index_plus_1_i(read_ram_index_plus_1),
-    .read_ram_index_minus_1_i(read_ram_index_minus_1),
+    .read_reg_index_i(read_ram_index),
+    .read_reg_index_plus_1_i(read_ram_index_plus_1),
+    .read_reg_index_minus_1_i(read_ram_index_minus_1),
     .line_done_pulse_o(line_done_pulse_sync),
     .pixel_data_valid_o(pixel_data_valid_o),
     .pixel_data_o(pixel_data_o)

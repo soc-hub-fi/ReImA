@@ -1,22 +1,21 @@
-/* 
-    File: cu_packet_decoder.sv
-    Project: Part of MIPI Camera Serial Interface Implementation
-    References: According to MIPI CSI RX specs v1.01
+//--------------------------------------------------------------------------------- 
+// Module: cu_packet_decoder
+// Project: Reconfigurable Image Acquisition and Processing Subsystem for MPSoCs (ReImA)
+// References: According to MIPI CSI RX specs v1.01
 
-    Functionality:
-    Input should look like this
-    //*Lane 0-----data_i[0]-----  <ECC>               <data3> ..
-    //*Lane 1-----data_i[1]-----  <WCount MSByte>     <data2> ..
-    //*Lane 2-----data_i[2]-----  <WCount LSByte>     <data1> ..
-    //*Lane 3-----data_i[3]-----  <DataID>            <data0> ..
-    
-    -   Packet decoder. The packet looks like this <packet_header> <payload_data> <packet_footer>
-    -   The number of active lanes must be 1, 2 or 4 lanes.
-    -   Packet header contains information about the payload data it is forwarded to ECC.
-    -   Payload data and packet footer are forwarded to CRC for error check
-    //*TODO: Generate error WC corruption when payload is less than length in packet header
-    Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
-*/
+// Functionality:
+// Input should look like this
+// Lane 0-----data_i[0]-----  <ECC>               <data3> ..
+// Lane 1-----data_i[1]-----  <WCount MSByte>     <data2> ..
+// Lane 2-----data_i[2]-----  <WCount LSByte>     <data1> ..
+// Lane 3-----data_i[3]-----  <DataID>            <data0> ..
+//  Packet decoder. The packet looks like this <packet_header> <payload_data> <packet_footer>
+//  The number of active lanes must be 1, 2 or 4 lanes.
+//  Packet header contains information about the payload data it is forwarded to ECC.
+//  Payload data and packet footer are forwarded to CRC for error check
+// TODO: Generate error WC corruption when payload is less than length in packet header
+// Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
+//-------------------------------------------------------------------------------- 
 
 `define SYNTH
 

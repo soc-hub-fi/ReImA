@@ -11,8 +11,8 @@
 //  Short packet data types are between 0x00 and 0x0F
 //  Long packet data types are between 0x10 and 0x3F
 //  Error signals functionality
-//      err_sot_sync_hs,   SOT sequence is corrupted that proper synchronization is not possible, sent to app. layer, whole transmission untill first D-PHY stop state is ignored, each lane should have that signal
-//      err_ecc_double,    2 bit error in ECC, sent to app. layer, whole transmission untill first stop state should be ignored, global for all VCID as it can't be decoded
+//      err_sot_sync_hs,   SOT sequence is corrupted that proper synchronization is not possible, sent to app. layer, whole transmission untill first D-PHY stop frame_state_q is ignored, each lane should have that signal
+//      err_ecc_double,    2 bit error in ECC, sent to app. layer, whole transmission untill first stop frame_state_q should be ignored, global for all VCID as it can't be decoded
 //      err_crc,           Should go to protocol decoding level to indicate payload data might be corrupted, it says might because CRC might be the corrupted one
 //      err_frame_sync_o,    Should be passed to app. layer. Asserted when FS not paired with FE and when err_sot_sync_hs or err_ecc_double are asserted, each VC should have this signal
 //      err_frame_data_o,    Should be passed to app. layer, asserted on CRC error when the first FE comes , each VC should have this signal
@@ -66,182 +66,175 @@ module cu_stream_controller (
 );
 
   // Internal signals
-  logic         packet_header_valid_r;
+  logic         packet_header_valid_q;
   logic         FS[4], FE[4];
-  logic         line_valid_r[4];
-  logic [15:0]  line_num_r[4];
-  logic         frame_valid_r[4];
-  logic [15:0]  frame_num_r[4];
+  logic         line_valid_q[4];
+  logic [15:0]  line_num_q[4];
+  logic         frame_valid_q[4];
+  logic [15:0]  frame_num_q[4];
   logic         err_frame_data[4];
-  logic         payload_error_r[4];
+  logic         payload_error_q[4];
   genvar        i;
 
   typedef enum logic [2:0] {
-    IDLE,
-    CORR_FS,
-    CORR_FE,
-    INCORR_FS,
-    INCORR_FE
-  } state_type;
+    Idle,
+    CorrFS,
+    CorrFE,
+    IncorrFS,
+    IncorrFE
+  } frame_state_e;
 
-  state_type state[4], nextstate[4];
+  frame_state_e frame_state_q[4], frame_state_d[4];
 
-  // Activate streaming layer
-  generate
-    for (i = 0; i < 4; i++) begin : gen_activate_stream
-      always_ff @(posedge clk_i or negedge reset_n_i) begin
-        if (!reset_n_i) begin
-          activate_stream_o[i] <= 1'b0;
+// Activate streaming layer
+  for (genvar i = 0; i < 4; i++) begin : gen_activate_stream
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+      if (!reset_n_i) begin
+        activate_stream_o[i] <= 1'b0;
+      end else begin
+        if (packet_header_valid_i &&
+          (vc_id_i == vc_id_reg_i[i]) &&
+          ((data_type_i == data_type_reg_i[i]) || (data_type_i == `EMB))) begin
+          activate_stream_o[i] <= 1'b1;
         end else begin
-          if (packet_header_valid_i &&
-            (vc_id_i == vc_id_reg_i[i]) &&
-            ((data_type_i == data_type_reg_i[i]) || (data_type_i == `EMB))) begin
-            activate_stream_o[i] <= 1'b1;
-          end else begin
-            activate_stream_o[i] <= 1'b0;
-          end
+          activate_stream_o[i] <= 1'b0;
         end
       end
     end
-  endgenerate
+  end
 
   // Synchronization registers
-  generate
-    for (i = 0; i < 4; i++) begin : gen_sync_registers
-      always_ff @(posedge clk_i or negedge reset_n_i) begin
-        if (!reset_n_i) begin
-          line_valid_r[i] <= 1'b0;
-          line_num_r[i] <= 16'b0;
-          frame_valid_r[i] <= 1'b0;
-          frame_num_r[i] <= 16'b0;
-          gsc1_o[i] <= 16'b0;
-          gsc2_o[i] <= 16'b0;
-          gsc3_o[i] <= 16'b0;
-          gsc4_o[i] <= 16'b0;
-          gsc5_o[i] <= 16'b0;
-          gsc6_o[i] <= 16'b0;
-          gsc7_o[i] <= 16'b0;
-          gsc8_o[i] <= 16'b0;
-        end else begin
-          if (packet_header_valid_i && (vc_id_i == vc_id_reg_i[i])) begin
-            case (data_type_i)
-              `FSC: begin
-                frame_valid_r[i] <= 1'b1;
-                frame_num_r[i] <= packet_length_i;
-              end
-              `FEC: frame_valid_r[i] <= 1'b0;
-              `LSC: begin
-                line_valid_r[i] <= 1'b1;
-                line_num_r[i] <= packet_length_i;
-              end
-              `LEC: line_valid_r[i] <= 1'b0;
-            endcase
+  for (genvar i = 0; i < 4; i++) begin : gen_sync_registers
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+      if (!reset_n_i) begin
+        line_valid_q[i] <= 1'b0;
+        line_num_q[i] <= 16'b0;
+        frame_valid_q[i] <= 1'b0;
+        frame_num_q[i] <= 16'b0;
+        gsc1_o[i] <= 16'b0;
+        gsc2_o[i] <= 16'b0;
+        gsc3_o[i] <= 16'b0;
+        gsc4_o[i] <= 16'b0;
+        gsc5_o[i] <= 16'b0;
+        gsc6_o[i] <= 16'b0;
+        gsc7_o[i] <= 16'b0;
+        gsc8_o[i] <= 16'b0;
+      end else begin
+        if (packet_header_valid_i && (vc_id_i == vc_id_reg_i[i])) begin
+          case (data_type_i)
+            `FSC: begin
+              frame_valid_q[i] <= 1'b1;
+              frame_num_q[i] <= packet_length_i;
+            end
+            `FEC: frame_valid_q[i] <= 1'b0;
+            `LSC: begin
+              line_valid_q[i] <= 1'b1;
+              line_num_q[i] <= packet_length_i;
+            end
+            `LEC: line_valid_q[i] <= 1'b0;
+          endcase
 
-            case (data_type_i)
-              `GSPC1: gsc1_o[i] <= packet_length_i;
-              `GSPC2: gsc2_o[i] <= packet_length_i;
-              `GSPC3: gsc3_o[i] <= packet_length_i;
-              `GSPC4: gsc4_o[i] <= packet_length_i;
-              `GSPC5: gsc5_o[i] <= packet_length_i;
-              `GSPC6: gsc6_o[i] <= packet_length_i;
-              `GSPC7: gsc7_o[i] <= packet_length_i;
-              `GSPC8: gsc8_o[i] <= packet_length_i;
-            endcase
-          end
+          case (data_type_i)
+            `GSPC1: gsc1_o[i] <= packet_length_i;
+            `GSPC2: gsc2_o[i] <= packet_length_i;
+            `GSPC3: gsc3_o[i] <= packet_length_i;
+            `GSPC4: gsc4_o[i] <= packet_length_i;
+            `GSPC5: gsc5_o[i] <= packet_length_i;
+            `GSPC6: gsc6_o[i] <= packet_length_i;
+            `GSPC7: gsc7_o[i] <= packet_length_i;
+            `GSPC8: gsc8_o[i] <= packet_length_i;
+          endcase
         end
       end
     end
-  endgenerate
+  end
 
   // FSM for frame error detection
-  generate
-    for (i = 0; i < 4; i++) begin : gen_fsm
-      assign FS[i] = (packet_header_valid_i && !packet_header_valid_r) &&
-               (data_type_i == `FSC) && (vc_id_i == vc_id_reg_i[i]);
-      assign FE[i] = (packet_header_valid_i && !packet_header_valid_r) &&
-               (data_type_i == `FEC) && (vc_id_i == vc_id_reg_i[i]);
+  for (genvar i = 0; i < 4; i++) begin : gen_fsm
+    assign FS[i] = (packet_header_valid_i && !packet_header_valid_q) &&
+              (data_type_i == `FSC) && (vc_id_i == vc_id_reg_i[i]);
+    assign FE[i] = (packet_header_valid_i && !packet_header_valid_q) &&
+              (data_type_i == `FEC) && (vc_id_i == vc_id_reg_i[i]);
 
-      always_ff @(posedge clk_i or negedge reset_n_i) begin
-        if (!reset_n_i) begin
-          state[i] <= IDLE;
-        end else begin
-          state[i] <= nextstate[i];
-        end
-      end
-
-      always_comb begin
-        nextstate[i] = IDLE;
-        case (state[i])
-          IDLE: begin
-            if (FE[i]) nextstate[i] = INCORR_FE;
-            else if (FS[i]) nextstate[i] = CORR_FS;
-          end
-          CORR_FS: begin
-            if (FS[i]) nextstate[i] = INCORR_FS;
-            else if (FE[i]) nextstate[i] = CORR_FE;
-          end
-          CORR_FE: begin
-            if (FE[i]) nextstate[i] = INCORR_FE;
-            else if (FS[i]) nextstate[i] = CORR_FS;
-          end
-          INCORR_FS: begin
-            if (FE[i]) nextstate[i] = CORR_FE;
-          end
-          INCORR_FE: begin
-            if (FS[i]) nextstate[i] = CORR_FS;
-          end
-        endcase
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+      if (!reset_n_i) begin
+        frame_state_q[i] <= Idle;
+      end else begin
+        frame_state_q[i] <= frame_state_d[i];
       end
     end
-  endgenerate
+
+    always_comb begin
+      frame_state_d[i] = Idle;
+      case (frame_state_q[i])
+        Idle: begin
+          if (FE[i]) frame_state_d[i] = IncorrFE;
+          else if (FS[i]) frame_state_d[i] = CorrFS;
+        end
+        CorrFS: begin
+          if (FS[i]) frame_state_d[i] = IncorrFS;
+          else if (FE[i]) frame_state_d[i] = CorrFE;
+        end
+        CorrFE: begin
+          if (FE[i]) frame_state_d[i] = IncorrFE;
+          else if (FS[i]) frame_state_d[i] = CorrFS;
+        end
+        IncorrFS: begin
+          if (FE[i]) frame_state_d[i] = CorrFE;
+        end
+        IncorrFE: begin
+          if (FS[i]) frame_state_d[i] = CorrFS;
+        end
+      endcase
+    end
+  end
 
   // Error handling
-  generate
-    for (i = 0; i < 4; i++) begin : gen_error_handling
-      always_ff @(posedge clk_i or negedge reset_n_i) begin
-        if (!reset_n_i) begin
-          payload_error_r[i] <= 1'b0;
-          err_frame_data_o[i] <= 1'b0;
+  for (genvar i = 0; i < 4; i++) begin : gen_error_handling
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+      if (!reset_n_i) begin
+        payload_error_q[i] <= 1'b0;
+        err_frame_data_o[i] <= 1'b0;
+        err_frame_sync_o[i] <= 1'b0;
+      end else begin
+        if (vc_id_reg_i[i] == vc_id_i) begin
+          if (err_crc_i) payload_error_q[i] <= 1'b1;
+          else if (err_frame_data_o[0] || 
+            err_frame_data_o[1] || 
+            err_frame_data_o[2] || 
+            err_frame_data_o[3]) payload_error_q[i] <= 1'b0;
+        end
+
+        if (payload_error_q[i] && FE[i]) err_frame_data_o[i] <= 1'b1;
+        else if (clear_frame_data_i[i]) err_frame_data_o[i] <= 1'b0;
+
+        if ((frame_state_q[i] == IncorrFS) || (frame_state_q[i] == IncorrFE) ||
+          err_sot_sync_hs_i || err_ecc_double_i) begin
+          err_frame_sync_o[i] <= 1'b1;
+        end else if (clear_frame_sync_i[i]) begin
           err_frame_sync_o[i] <= 1'b0;
-        end else begin
-          if (vc_id_reg_i[i] == vc_id_i) begin
-            if (err_crc_i) payload_error_r[i] <= 1'b1;
-            else if (|err_frame_data_o) payload_error_r[i] <= 1'b0;
-          end
-
-          if (payload_error_r[i] && FE[i]) err_frame_data_o[i] <= 1'b1;
-          else if (clear_frame_data_i[i]) err_frame_data_o[i] <= 1'b0;
-
-          if ((state[i] == INCORR_FS) || (state[i] == INCORR_FE) ||
-            err_sot_sync_hs_i || err_ecc_double_i) begin
-            err_frame_sync_o[i] <= 1'b1;
-          end else if (clear_frame_sync_i[i]) begin
-            err_frame_sync_o[i] <= 1'b0;
-          end
         end
       end
     end
-  endgenerate
+  end
 
   // Packet header valid register
   always_ff @(posedge clk_i or negedge reset_n_i) begin
     if (!reset_n_i) begin
-      packet_header_valid_r <= 1'b0;
+      packet_header_valid_q <= 1'b0;
     end else begin
-      packet_header_valid_r <= packet_header_valid_i;
+      packet_header_valid_q <= packet_header_valid_i;
     end
   end
 
   // MUX for selecting VC signals
-  generate
-    for (i = 0; i < 4; i++) begin : gen_mux
-      always_comb begin
-        line_valid_o[i] = line_valid_r[vc_id_reg_i[i]];
-        line_num_o[i] = line_num_r[vc_id_reg_i[i]];
-        frame_valid_o[i] = frame_valid_r[vc_id_reg_i[i]];
-        frame_num_o[i] = frame_num_r[vc_id_reg_i[i]];
-      end
+  for (genvar i = 0; i < 4; i++) begin : gen_mux
+    always_comb begin
+      line_valid_o[i] = line_valid_q[vc_id_reg_i[i]];
+      line_num_o[i] = line_num_q[vc_id_reg_i[i]];
+      frame_valid_o[i] = frame_valid_q[vc_id_reg_i[i]];
+      frame_num_o[i] = frame_num_q[vc_id_reg_i[i]];
     end
-  endgenerate
+  end
 
 endmodule
