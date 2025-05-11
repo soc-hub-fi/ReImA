@@ -11,7 +11,7 @@ START_TIME=`date +%F_%H:%M`
 DATE=`date +%F`
 SHELL=bash
 
-DUT = tb_top_camera_axi
+DUT = tb_iap_core
 
 AXI_DIR				?= $(shell bender path axi)
 COMMON_CELLS_DIR 	?= $(shell bender path common_cells)
