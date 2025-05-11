@@ -18,8 +18,8 @@ module tb_iap_core #(
         parameter AXIS_DATA_WIDTH    = 32,
         parameter AXIS_USER_WIDTH    = 1,
         // TB parameters
-        parameter IMG_WIDTH         = 3840,
-        parameter IMG_LENGTH        = 2160,
+        parameter IMG_WIDTH         = 512,
+        parameter IMG_LENGTH        = 512,
         parameter time BYTE_PERIOD  = 5.555ns,
         parameter time PIXEL_PERIOD = 3.333ns,
         parameter time TbApplTime   = PIXEL_PERIOD,
@@ -190,7 +190,7 @@ module tb_iap_core #(
                     .WIDTH(IMG_WIDTH), 
                     .LENGTH(IMG_LENGTH), 
                     .DATATYPE("RAW10"), 
-                    .INPUT("IMG")
+                    .INPUT("BLANK")
                 ) 
         dphy_rx_model_i(); // change this when chaning the image
 
@@ -361,12 +361,12 @@ module tb_iap_core #(
         initial begin
             `ifndef FPGA
                 for(int i=0; i< 256; i++) begin
-                    iap_core_i.csi_axi_master_i.yuv_mem_array_wrapper_i.y_buffer0.MEM[i] = 0;
-                    iap_core_i.csi_axi_master_i.yuv_mem_array_wrapper_i.y_buffer1.MEM[i] = 0;
-                    iap_core_i.csi_axi_master_i.yuv_mem_array_wrapper_i.u_buffer0.MEM[i] = 0;
-                    iap_core_i.csi_axi_master_i.yuv_mem_array_wrapper_i.u_buffer1.MEM[i] = 0;
-                    iap_core_i.csi_axi_master_i.yuv_mem_array_wrapper_i.v_buffer0.MEM[i] = 0;
-                    iap_core_i.csi_axi_master_i.yuv_mem_array_wrapper_i.v_buffer1.MEM[i] = 0;
+                    iap_core_i.axi_master_i.u_mem_yuv_array_wrapper.y_buffer0.MEM[i] = 0;
+                    iap_core_i.axi_master_i.u_mem_yuv_array_wrapper.y_buffer1.MEM[i] = 0;
+                    iap_core_i.axi_master_i.u_mem_yuv_array_wrapper.u_buffer0.MEM[i] = 0;
+                    iap_core_i.axi_master_i.u_mem_yuv_array_wrapper.u_buffer1.MEM[i] = 0;
+                    iap_core_i.axi_master_i.u_mem_yuv_array_wrapper.v_buffer0.MEM[i] = 0;
+                    iap_core_i.axi_master_i.u_mem_yuv_array_wrapper.v_buffer1.MEM[i] = 0;
                 end
             `endif
             //reset_n_i = 1;
@@ -402,7 +402,7 @@ module tb_iap_core #(
             $display("output_select = %b", iap_core_i.output_select);
             $display("dual_buffer_en = %b", iap_core_i.double_buff_enable_reg);
             //iap_core_i.csi_enable = 1'b1;{sim:/tb_top_camera_axi/iap_core_i/isp_pipeline_i/isp_gen[0]/flow_control_i/dst_clear_pending_o} 
-            wait(!iap_core_i.isp_pipeline_i.isp_gen[0].flow_control_i.dst_clear_pending_o);
+            wait(!iap_core_i.image_processing_unit_i.ipu_gen[0].ipu_flow_control_i.dst_clear_pending_o);
             dphy_rx_model_i.send_frame(0,0, read_file);
             // wait for 3 lines
             //wait(frame_wr_done_intr_o);
