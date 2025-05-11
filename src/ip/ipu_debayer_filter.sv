@@ -110,7 +110,7 @@ module ipu_debayer_filter (
   mem_dual_port_wrapper #(
     .AddrWidth    (AddrWidth),
     .DataWidth    (DataWidth + ValidWidth),
-    .MEM_NUM      (2)
+    .MemNum       (2)
   ) mem_dual_port_wrapper_i (
     .reset_n_i              (reset_n_i),
     .clk_i                  (clk_i),

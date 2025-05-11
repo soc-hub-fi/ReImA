@@ -21,11 +21,11 @@ module image_processing_unit #(
   input  logic [2:0]                  pixel_per_clk_reg_i [PIPELINE_WIDTH],     // Pixels per clock for each pipeline (1, 2, or 4)
   input  logic [5:0]                  data_type_reg_i [PIPELINE_WIDTH],         // Data type for each pipeline
   input  logic [1:0]                  bayer_filter_type_reg_i [PIPELINE_WIDTH], // Bayer filter type: RGGB(00), BGGR(01), GBRG(10), GRBG(11)
-  input  logic [PIPELINE_WIDTH-1:0]   frame_valid_i,                            // Frame reception in progress for each pipeline
-  input  logic [PIPELINE_WIDTH-1:0]   line_valid_i,                             // Line reception in progress for each pipeline
-  output logic [PIPELINE_WIDTH-1:0]   line_valid_pixel_sync_o,                  // Synchronized line_valid with data output
-  output logic [PIPELINE_WIDTH-1:0]   line_valid_yuv_sync_o,                    // Synchronized line_valid for YUV output
-  output logic [PIPELINE_WIDTH-1:0]   frame_done_pulse_o,                       // Frame done pulse from debayer
+  input  logic                        frame_valid_i [PIPELINE_WIDTH],           // Frame reception in progress for each pipeline
+  input  logic                        line_valid_i [PIPELINE_WIDTH],            // Line reception in progress for each pipeline
+  output logic                        line_valid_pixel_sync_o [PIPELINE_WIDTH], // Synchronized line_valid with data output
+  output logic                        line_valid_yuv_sync_o [PIPELINE_WIDTH],   // Synchronized line_valid for YUV output
+  output logic                        frame_done_pulse_o [PIPELINE_WIDTH],      // Frame done pulse from debayer
   input  logic                        line_valid_sync_fake_i,
   input  logic [3:0]                  byte_data_valid_i,                        // Pixel data valid for each pixel in byte clock domain
   input  logic [47:0]                 byte_data_i,                              // Up to 2 RGB888 pixels (2*24=48 bits) in byte clock domain
@@ -126,8 +126,8 @@ module image_processing_unit #(
       .pixel_clk_i         (pixel_clk_i),
 
       // Configuration Interface
-      .pixel_per_clk_i     (pixel_per_clk_reg_i[i]),
-      .data_type_i         (data_type_reg_i[i]),
+      .pixel_per_clk_reg_i (pixel_per_clk_reg_i[i]),
+      .data_type_reg_i         (data_type_reg_i[i]),
 
       // Data Interface
       .line_valid_i        (line_valid_sync2[i]),

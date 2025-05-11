@@ -11,34 +11,32 @@ module mem_dual_port_model #(
   input  logic [AddrWidth-1:0]       rd_addr_i, 
   output logic [DataWidth-1:0]       rd_data_o
 );
-  // Memory array
+  integer i;
   logic [DataWidth-1:0] ram [2**AddrWidth];
 
-  // Initialize memory
-  initial begin
-    for (int i = 0; i < 2**AddrWidth; i++) begin
-      ram[i] = '0;
-    end
-  end
+  //write logic
+  generate
+      initial
+          for(i=0; i<2**AddrWidth; i++)
+              ram[i] = 0;
+  endgenerate
 
-  // Write logic
-  always_ff @(posedge clk_i or posedge rst_i) begin
-    if (rst_i) begin
-      for (int i = 0; i < 2**AddrWidth; i++) begin
-        ram[i] <= '0;
+  always@(posedge clk_i) begin
+      if(rst_i) begin
+          for(i=0; i<2**AddrWidth; i++)
+              ram[i] = 0;
       end
-    end else if (wr_en_i) begin
-      ram[wr_addr_i] <= wr_data_i;
-    end
+      else if(wr_en_i)
+          ram[wr_addr_i] <= wr_data_i;
   end
 
-  // Read logic
-  always_ff @(posedge clk_i or posedge rst_i) begin
-    if (rst_i) begin
-      rd_data_o <= '0;
-    end else if (rd_en_i) begin
-      rd_data_o <= ram[rd_addr_i];
-    end
+  //read logic
+  always@(posedge clk_i) begin
+      if(rst_i)
+          rd_data_o <= 0;
+      else begin
+          if(rd_en_i)
+              rd_data_o <= ram[rd_addr_i];
+      end
   end
-
 endmodule

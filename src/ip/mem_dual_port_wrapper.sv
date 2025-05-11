@@ -13,7 +13,7 @@
 
     Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
 */
-module mem_dual_port_wrappe #(   
+module mem_dual_port_wrapper #(   
   parameter int AddrWidth = 11,
   parameter int DataWidth = 45,
   parameter int MemNum = 1  // Number of memories

@@ -23,17 +23,17 @@ module control_unit (
   // Error signals interface
   input  logic        err_sot_sync_hs_i,       // SOT sequence corrupted, synchronization not possible
   output logic        err_crc_o,               // CRC error in received packet data
-  output logic [3:0]  err_frame_sync_o,        // FS not paired with FE
-  output logic [3:0]  err_frame_data_o,        // Frame has corrupted data
+  output logic        err_frame_sync_o [4],        // FS not paired with FE
+  output logic        err_frame_data_o [4],        // Frame has corrupted data
 
   // Stream information interface
   output logic [3:0]  activate_stream_o,        // Activate stream for short packet or payload data
   output logic        header_no_error_o,        // No 1- or 2-bit errors
   output logic        header_corrected_error_o, // Corrected 1-bit error
   output logic        header_error_o,           // 2-bit error detected
-  output logic [3:0]  line_valid_o,             // Line reception active signal
+  output logic        line_valid_o [4],             // Line reception active signal
   output logic [15:0] line_num_o [4],           // Line number (increments per frame)
-  output logic [3:0]  frame_valid_o,            // Frame reception active signal
+  output logic        frame_valid_o [4],            // Frame reception active signal
   output logic [15:0] frame_num_o [4],          // Frame number (increments per FS packet)
 
   // Data interface
