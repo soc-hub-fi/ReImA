@@ -1,107 +1,103 @@
-/* 
-    File: lmu_lane_aligner.sv
-    Project: Part of MIPI Camera Serial Interface Implementation
-    References: According to MIPI CSI RX specs v1.01
+//---------------------------------------------------------------------------------
+// Module: lmu_lane_aligner.sv
+// Project: Reconfigurable Image Acquisition and Processing Subsystem for MPSoCs (ReImA)
+// References: According to MIPI CSI RX specs v1.01
+// Functionality:
+// Input should look like this
+//  Lane 0-----data_i[0]-----  <ECC>               <data3> ..
+//  Lane 1-----data_i[1]-----  <WCount MSByte>     <data2> ..
+//  Lane 2-----data_i[2]-----  <WCount LSByte>     <data1> ..
+//  Lane 3-----data_i[3]-----  <DataID>            <data0> ..
+//    alignes the bytes of each lane on the same clock edge along with the valids
+// Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
+//--------------------------------------------------------------------------------
+module lmu_lane_aligner #(
+  parameter int MIPIGear = 16,
+  parameter int MIPILanes = 4
+) (
+  input  logic                          reset_n_i,
+  input  logic                          clk_i,
+  input  logic [MIPILanes-1:0]         bytes_valid_i,
+  input  logic [(MIPIGear * MIPILanes)-1:0] lane_bytes_i,
+  output logic [(MIPIGear * MIPILanes)-1:0] lane_bytes_o,
+  output logic [MIPILanes-1:0]         lane_valid_o
+);
 
-    Functionality:
-    Input should look like this
-    //*Lane 0-----data_i[0]-----  <ECC>               <data3> ..
-    //*Lane 1-----data_i[1]-----  <WCount MSByte>     <data2> ..
-    //*Lane 2-----data_i[2]-----  <WCount LSByte>     <data1> ..
-    //*Lane 3-----data_i[3]-----  <DataID>            <data0> ..
-    
-    -   alignes the bytes of each lane on the same clock edge along with the valids
+  // How many byte misalignment is allowed, whole package length must also be longer than this.
+  // TODO: Investigate why this calculation was chosen and how it might differ in other scenarios.
+  localparam logic [3:0] AlignDepth = 4'h7;
 
-    Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
-*/
+  logic [(MIPIGear * MIPILanes)-1:0]   data_lane_fifo [AlignDepth-1:0];
+  logic [MIPILanes-1:0]                valid_lane_fifo [AlignDepth-1:0];
+  logic [3:0]                          last_lane_bytes_index [MIPILanes-1:0];
+  logic                                valid_out_reg;
+  int                                  i;
+  int                                  x;
 
-module lmu_lane_aligner	#(parameter MIPI_GEAR=16, parameter MIPI_LANES=4)(	
-                                    input                                               reset_n_i,
-                                    input                                               clk_i,
-                                    input           [(MIPI_LANES-1):0]                  bytes_valid_i,
-                                    input           [((MIPI_GEAR * MIPI_LANES)-1):0]    lane_bytes_i,
-                                    output logic    [((MIPI_GEAR * MIPI_LANES)-1):0]    lane_bytes_o,
-                                    output logic    [(MIPI_LANES-1):0]                  lane_valid_o
-                                );
-
-    localparam [3:0]ALIGN_DEPTH = 4'h7; //how many byte misalignment is allowed, whole package length must be also longer than this
-                                        //TODO: Why did he calculate it like that how would it differ?
-
-    logic [(MIPI_GEAR * MIPI_LANES)-1:0] data_lane_fifo [ALIGN_DEPTH-1:0];
-    logic [(MIPI_LANES)-1:0] valid_lane_fifo [ALIGN_DEPTH-1:0];
-
-    logic [3:0] last_lane_bytes_index [MIPI_LANES-1:0];
-    logic valid_out_reg;
-    integer i, x;
-    // insert data into fifo
-    always@(posedge clk_i, negedge reset_n_i) begin //! corner cases: 1) What if it overflows? 2) What if they are already aligned?
-        if(!reset_n_i) begin
-            for(i=0; i<MIPI_LANES; i++) begin
-                last_lane_bytes_index[i] <= 0;
-                data_lane_fifo[i] <= 0;
-                valid_lane_fifo[i] <= 0;
-            end
+  // Insert data into FIFO
+  always_ff @(posedge clk_i or negedge reset_n_i) begin
+    if (!reset_n_i) begin
+      for (i = 0; i < MIPILanes; i++) begin
+        last_lane_bytes_index[i] <= 0;
+      end
+      for (x = 0; x < AlignDepth; x++) begin
+        data_lane_fifo[x] <= '0;
+        valid_lane_fifo[x] <= '0;
+      end
+    end else begin
+      if (!(|bytes_valid_i || |lane_valid_o)) begin
+        for (i = 0; i < MIPILanes; i++) begin
+          last_lane_bytes_index[i] <= 0;
         end
-        else begin
-            if( !((|bytes_valid_i) || lane_valid_o)) begin
-                for(i=0; i<MIPI_LANES; i++)
-                    last_lane_bytes_index[i] <= 0;
-            end
-            for(i=0; i<MIPI_LANES; i++) begin
-                if(bytes_valid_i[i]) begin
+      end
+      for (i = 0; i < MIPILanes; i++) begin
+        if (bytes_valid_i[i]) begin
+          data_lane_fifo[0][i * MIPIGear +: MIPIGear] <= lane_bytes_i[i * MIPIGear +: MIPIGear];
+          valid_lane_fifo[0][i] <= bytes_valid_i[i];
 
-                    data_lane_fifo[0][i*MIPI_GEAR +: MIPI_GEAR] <= lane_bytes_i[i*MIPI_GEAR +: MIPI_GEAR];
-                    valid_lane_fifo[0][i] <= bytes_valid_i[i];
+          last_lane_bytes_index[i] <= valid_out_reg ? last_lane_bytes_index[i] : last_lane_bytes_index[i] + 4'd1;
 
-                    last_lane_bytes_index[i] <= (valid_out_reg)? last_lane_bytes_index[i] : last_lane_bytes_index[i] + 4'd1; // first byte is 1 so subtract 1 from this when used
-
-                    for(x=0; x<ALIGN_DEPTH-1; x++) begin
-                        data_lane_fifo[x+1] <= data_lane_fifo[x];
-                        valid_lane_fifo[x+1] <= valid_lane_fifo[x];
-                    end
-                end
-            end
+          for (x = 0; x < AlignDepth - 1; x++) begin
+            data_lane_fifo[x + 1] <= data_lane_fifo[x];
+            valid_lane_fifo[x + 1] <= valid_lane_fifo[x];
+          end
         end
+      end
     end
-    //! once all lanes are valid, stay valid untill none are valid to not forget about the last bytes coming in
-    //* Should be done using a register not compinationally. to let the data be written into the fifo.
-    /*if all of them are valid
-        go high
-    if all of them are not valid
-        go low
-        if some of them are valid
-        look at the previous state and determine
-        Would that be good or slow? should be fine*/
-    always@(posedge clk_i, negedge reset_n_i) begin
-        if(!reset_n_i)
-            valid_out_reg <= 0;
-        else begin
-            if(&bytes_valid_i)
-                valid_out_reg <= 1;
-            else if(!(|bytes_valid_i))
-                valid_out_reg <= 0;
-        end
+  end
+
+  // Once all lanes are valid, stay valid until none are valid to not forget about the last bytes coming in.
+  // This is implemented using a register to allow data to be written into the FIFO.
+  always_ff @(posedge clk_i or negedge reset_n_i) begin
+    if (!reset_n_i) begin
+      valid_out_reg <= 1'b0;
+    end else begin
+      if (&bytes_valid_i) begin
+        valid_out_reg <= 1'b1;
+      end else if (~|bytes_valid_i) begin
+        valid_out_reg <= 1'b0;
+      end
     end
-        
-    // extract data from fifo
-    always@(posedge clk_i, negedge reset_n_i) begin
-        if(!reset_n_i) begin
-            lane_valid_o <= 0;
-            lane_bytes_o <= 0;
+  end
+
+  // Extract data from FIFO
+  always_ff @(posedge clk_i or negedge reset_n_i) begin
+    if (!reset_n_i) begin
+      lane_valid_o <= '0;
+      lane_bytes_o <= '0;
+    end else begin
+      if (valid_out_reg) begin
+        for (int lane_idx = 0; lane_idx < MIPILanes; lane_idx++) begin
+          lane_bytes_o[lane_idx * MIPIGear +: MIPIGear] <=
+              data_lane_fifo[last_lane_bytes_index[lane_idx] - 1][lane_idx * MIPIGear +: MIPIGear];
+          lane_valid_o[lane_idx] <=
+              valid_lane_fifo[last_lane_bytes_index[lane_idx] - 1][lane_idx];
         end
-        else begin
-            
-            if(valid_out_reg) begin
-                for(i=0; i<MIPI_LANES; i++) begin
-                    lane_bytes_o[i*MIPI_GEAR +: MIPI_GEAR] <= data_lane_fifo[last_lane_bytes_index[i]-1][i*MIPI_GEAR +: MIPI_GEAR];
-                    lane_valid_o[i] <= valid_lane_fifo[last_lane_bytes_index[i]-1][i];
-                end
-            end
-            else begin
-                lane_valid_o <= 0;
-                lane_bytes_o <= 0;
-            end
-            
-        end
+      end else begin
+        lane_valid_o <= '0;
+        lane_bytes_o <= '0;
+      end
     end
+  end
+
 endmodule

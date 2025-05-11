@@ -1,34 +1,34 @@
-/* 
-    File: cu_crc16_parallel.sv
-    Project: Part of MIPI Camera Serial Interface Implementation
-    References: According to MIPI CSI RX specs v1.01
-
-    Functionality:
-    -   This module is a parallel CRC generator based on the polynomial x^16+x^12+x^5+1
-    -   This module is made using parallel CRC generator tool https://bues.ch/cms/hacking/crcgen
-    -   Theory of where it comes from is here http://outputlogic.com/?p=158
-
-    Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
-*/
+// -----------------------------------------------------------------------------
+// Module: cu_crc16_parallel
+// Project: Reconfigurable Image Acqusition and Processing Subsystem for MPSoCs (ReImA)
+// Description:
+//   Parallel CRC generator based on the polynomial x^16 + x^12 + x^5 + 1.
+//   Generated using the parallel CRC generator tool: https://bues.ch/cms/hacking/crcgen
+//   Theory reference: http://outputlogic.com/?p=158
+//
+// Author: Mohamed Soliman <mohamed.w.soliman@tuni.fi>
+// -----------------------------------------------------------------------------
 module cu_crc16_parallel (
-    input           [15:0]  crcIn, // previous crc stage output
-    input           [7:0]   data,
-    output logic    [15:0]  crcOut
+    input  logic [15:0] crc_i,  // Previous CRC stage output
+    input  logic [7:0]  data_i, // Input data
+    output logic [15:0] crc_o   // Computed CRC output
 );
-    assign crcOut[0] = crcIn[0] ^ crcIn[4] ^ crcIn[8] ^ data[0] ^ data[4];
-    assign crcOut[1] = crcIn[1] ^ crcIn[5] ^ crcIn[9] ^ data[1] ^ data[5];
-    assign crcOut[2] = crcIn[2] ^ crcIn[6] ^ crcIn[10] ^ data[2] ^ data[6];
-    assign crcOut[3] = crcIn[0] ^ crcIn[3] ^ crcIn[7] ^ crcIn[11] ^ data[0] ^ data[3] ^ data[7];
-    assign crcOut[4] = crcIn[1] ^ crcIn[12] ^ data[1];
-    assign crcOut[5] = crcIn[2] ^ crcIn[13] ^ data[2];
-    assign crcOut[6] = crcIn[3] ^ crcIn[14] ^ data[3];
-    assign crcOut[7] = crcIn[0] ^ crcIn[4] ^ crcIn[15] ^ data[0] ^ data[4];
-    assign crcOut[8] = crcIn[0] ^ crcIn[1] ^ crcIn[5] ^ data[0] ^ data[1] ^ data[5];
-    assign crcOut[9] = crcIn[1] ^ crcIn[2] ^ crcIn[6] ^ data[1] ^ data[2] ^ data[6];
-    assign crcOut[10] = crcIn[2] ^ crcIn[3] ^ crcIn[7] ^ data[2] ^ data[3] ^ data[7];
-    assign crcOut[11] = crcIn[3] ^ data[3];
-    assign crcOut[12] = crcIn[0] ^ crcIn[4] ^ data[0] ^ data[4];
-    assign crcOut[13] = crcIn[1] ^ crcIn[5] ^ data[1] ^ data[5];
-    assign crcOut[14] = crcIn[2] ^ crcIn[6] ^ data[2] ^ data[6];
-    assign crcOut[15] = crcIn[3] ^ crcIn[7] ^ data[3] ^ data[7];
+
+  assign crc_o[0] = crc_i[0] ^ crc_i[4] ^ crc_i[8] ^ data_i[0] ^ data_i[4];
+  assign crc_o[1] = crc_i[1] ^ crc_i[5] ^ crc_i[9] ^ data_i[1] ^ data_i[5];
+  assign crc_o[2] = crc_i[2] ^ crc_i[6] ^ crc_i[10] ^ data_i[2] ^ data_i[6];
+  assign crc_o[3] = crc_i[0] ^ crc_i[3] ^ crc_i[7] ^ crc_i[11] ^ data_i[0] ^ data_i[3] ^ data_i[7];
+  assign crc_o[4] = crc_i[1] ^ crc_i[12] ^ data_i[1];
+  assign crc_o[5] = crc_i[2] ^ crc_i[13] ^ data_i[2];
+  assign crc_o[6] = crc_i[3] ^ crc_i[14] ^ data_i[3];
+  assign crc_o[7] = crc_i[0] ^ crc_i[4] ^ crc_i[15] ^ data_i[0] ^ data_i[4];
+  assign crc_o[8] = crc_i[0] ^ crc_i[1] ^ crc_i[5] ^ data_i[0] ^ data_i[1] ^ data_i[5];
+  assign crc_o[9] = crc_i[1] ^ crc_i[2] ^ crc_i[6] ^ data_i[1] ^ data_i[2] ^ data_i[6];
+  assign crc_o[10] = crc_i[2] ^ crc_i[3] ^ crc_i[7] ^ data_i[2] ^ data_i[3] ^ data_i[7];
+  assign crc_o[11] = crc_i[3] ^ data_i[3];
+  assign crc_o[12] = crc_i[0] ^ crc_i[4] ^ data_i[0] ^ data_i[4];
+  assign crc_o[13] = crc_i[1] ^ crc_i[5] ^ data_i[1] ^ data_i[5];
+  assign crc_o[14] = crc_i[2] ^ crc_i[6] ^ data_i[2] ^ data_i[6];
+  assign crc_o[15] = crc_i[3] ^ crc_i[7] ^ data_i[3] ^ data_i[7];
+
 endmodule
