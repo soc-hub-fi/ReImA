@@ -7,9 +7,6 @@ package:
 dependencies:
   axi: { git: "https://github.com/pulp-platform/axi.git", version: 0.39.0 }
 
-export_include_dirs:
-  - src/include
-
 sources:
   files:
   - src/ip/mem_dual_port_model.sv
