@@ -69,4 +69,4 @@ wave: check-env
 
 .PHONY: clean
 clean:
-	rm -rf build
+	rm -rf build .bender
