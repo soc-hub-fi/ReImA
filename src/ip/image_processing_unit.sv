@@ -16,7 +16,6 @@ module image_processing_unit #(
   input  logic                        byte_clk_i,                               // Byte clock, usually 1/8 of the line rate from the DPHY
   input  logic                        pixel_reset_n_i,                          // Active low reset for pixel domain
   input  logic                        pixel_clk_i,                              // Pixel clock, must be > ((line rate * #ActiveLanes) / (PPC * BitsPerPixel))
-  input  logic                        isp_clk_enable_i,
   input  logic [3:0]                  activate_stream_i,                        // Selects which ISP pipeline receives data
   input  logic [2:0]                  pixel_per_clk_reg_i [PIPELINE_WIDTH],     // Pixels per clock for each pipeline (1, 2, or 4)
   input  logic [5:0]                  data_type_reg_i [PIPELINE_WIDTH],         // Data type for each pipeline
