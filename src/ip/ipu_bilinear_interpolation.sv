@@ -154,9 +154,9 @@ module ipu_bilinear_interpolation #(
   logic line_done_pulse_q3;
   logic line_done_pulse_q4;
   logic line_done_pulse_q5;
-  logic [ValidWidth-1:0] reg_pipe_valids_q;
-  logic [ValidWidth-1:0] reg_pipe_valids_q2;
-  logic [ValidWidth-1:0] reg_pipe_valids_q3;
+  logic [ValidWidth-1:0] reg_pipe_valids_q [2:0];
+  logic [ValidWidth-1:0] reg_pipe_valids_q2 [2:0];
+  logic [ValidWidth-1:0] reg_pipe_valids_q3 [2:0];
   logic [ValidWidth-1:0] reg_pipe_valids_q4;
   logic [ValidWidth-1:0] reg_pipe_valids_q5;
 
@@ -310,9 +310,7 @@ module ipu_bilinear_interpolation #(
   // Pipeline registers for valid signals and line done pulse, following lowRISC SystemVerilog style
   always_ff @(posedge clk_i or negedge reset_n_i) begin
     if (!reset_n_i) begin
-      for (int j = 0; j < 3; j++) begin
-        reg_pipe_valids_q3[j] <= '0;
-      end
+      reg_pipe_valids_q3   <= '{default: '0};
       reg_pipe_valids_q4   <= '0;
       reg_pipe_valids_q5   <= '0;
       pixel_data_valid_o   <= '0;
