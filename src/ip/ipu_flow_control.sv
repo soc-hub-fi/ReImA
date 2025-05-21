@@ -317,6 +317,7 @@ module ipu_flow_control (
       byte_valid_o         <= '0;
       line_valid_sync_o    <= '0;
       line_done_pulse_o    <= '0;
+      line_done_pulse_q    <= '0;
     end else begin
       line_done_pulse_q    <= line_done_pulse;
       line_done_pulse_o    <= line_done_pulse_q;
