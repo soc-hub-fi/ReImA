@@ -114,11 +114,7 @@ module ipu_flow_control (
       line_valid_q            <= 1'b0;
       frame_valid_q           <= 1'b0;
       line_valid_sync_fake_q  <= 1'b0;
-      line_code_operative     <= 1'b0;
     end else begin
-      if (line_valid_posedge) begin
-        line_code_operative <= 1'b1;
-      end
       line_valid_sync_fake_q <= line_valid_sync_fake_i;
       line_valid_q           <= line_valid_i;
       frame_valid_q          <= frame_valid_i;
