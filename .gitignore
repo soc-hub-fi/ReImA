@@ -24,3 +24,8 @@ vivado*
 
 # apb_i2c
 src/rtl/apb_i2c
+# Generated image-quality test artifacts (reproducible via mosaic_to_raw.py / run_all_kodak.sh)
+scripts/img_quality/kodak_raws/
+scripts/img_quality/current*
+scripts/img_quality/small_128*
+scripts/img_quality/512_current*

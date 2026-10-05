@@ -131,8 +131,8 @@ module ipu_color_conversion (
                                   rgb_data_i[((i * (PIXEL_WIDTH10 * 3)) + (PIXEL_WIDTH10 * 2)) + datatype_offset +: PIXEL_WIDTH];
         yuv_g[i].v         <= (25'd106 * rgb_data_i[((i * (PIXEL_WIDTH10 * 3)) + PIXEL_WIDTH10) + datatype_offset +: PIXEL_WIDTH]);
         yuv_b[i].v         <= (25'd21 * rgb_data_i[(i * (PIXEL_WIDTH10 * 3)) + datatype_offset +: PIXEL_WIDTH]);
-        yuv_r_p_g[i].v     <= yuv_r[i].v + yuv_g[i].v;
-        yuv_b_p_c[i].v     <= yuv_b[i].v + 8'd128;
+        yuv_r_p_g[i].v     <= yuv_g[i].v + yuv_b[i].v;
+        yuv_b_p_c[i].v     <= yuv_r[i].v + 8'd128;
         yuv_result_q[i].v  <= (yuv_b_p_c[i].v - yuv_r_p_g[i].v) >> PIXEL_WIDTH;
         yuv_result_q2[i].v <= yuv_result_q[i].v[7:0] + 8'd128;
       end
