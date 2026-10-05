@@ -189,9 +189,9 @@ module tb_iap_core #(
                     .MIPI_LANES(4), 
                     .WIDTH(IMG_WIDTH), 
                     .LENGTH(IMG_LENGTH), 
-                    .DATATYPE("RAW10"), 
-                    .INPUT("BLANK")
-                ) 
+                    .DATATYPE("RAW10"),
+                    .INPUT("IMG")
+                )
         dphy_rx_model_i(); // change this when chaning the image
 
     /*********
@@ -375,7 +375,7 @@ module tb_iap_core #(
             //#200
             //reset_n_i = 1;
             eos=1'b0;
-            read_file = $fopen("../src/tb/img_in/img_bayer_3840x2160_RGGB_08bits.raw","rb");
+            read_file = $fopen("../scripts/img_quality/current.raw","rb");
             //dphy_rx_model_i.read_file_i = read_file;
             dphy_rx_model_i.reset_outputs();
             @(posedge iap_core_i.reset_n_i);
